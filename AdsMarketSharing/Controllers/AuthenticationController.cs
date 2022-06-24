@@ -99,7 +99,7 @@ namespace AdsMarketSharing.Controllers
                     Subject = "Thanking letter",
                     IsHtmlBody = true,
                     Body = "Thanks",
-                    HtmlBody = $"<h1>Thanks for becomming our member<h1>" +
+                    HtmlBody = $"<h1>Welcome for becomming our member<h1>" +
                     $"<p>Please click here:<span>" +
                     $"<a href=\"https://{currentHost}/api/auth/confirmEmail?userId={loginResponse.Data.AccountId}&token={token}\">\"https://{currentHost}/\"</a>" +
                     $"</span> to confirm your email</p>"
