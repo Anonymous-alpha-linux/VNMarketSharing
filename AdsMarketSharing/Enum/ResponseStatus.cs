@@ -9,6 +9,7 @@ namespace AdsMarketSharing.Enum
         ActivatedAccount,
         NoActivatedAccount,
         EnableAccount,
-        NoEnableAccount
+        NoEnableAccount,
+        NotAcceptableToken,
     }
 }

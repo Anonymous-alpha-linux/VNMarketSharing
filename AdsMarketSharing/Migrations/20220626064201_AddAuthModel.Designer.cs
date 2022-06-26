@@ -4,14 +4,16 @@ using AdsMarketSharing.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AdsMarketSharing.Migrations
 {
     [DbContext(typeof(SQLExpressContext))]
-    partial class SQLExpressContextModelSnapshot : ModelSnapshot
+    [Migration("20220626064201_AddAuthModel")]
+    partial class AddAuthModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,7 +140,8 @@ namespace AdsMarketSharing.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
+                    b.HasIndex("AccountId")
+                        .IsUnique();
 
                     b.ToTable("RefreshTokens");
                 });
@@ -161,8 +164,8 @@ namespace AdsMarketSharing.Migrations
             modelBuilder.Entity("AdsMarketSharing.Models.Token.RefreshToken", b =>
                 {
                     b.HasOne("AdsMarketSharing.Models.Auth.Account", "Account")
-                        .WithMany("RefreshToken")
-                        .HasForeignKey("AccountId")
+                        .WithOne("RefreshToken")
+                        .HasForeignKey("AdsMarketSharing.Models.Token.RefreshToken", "AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
