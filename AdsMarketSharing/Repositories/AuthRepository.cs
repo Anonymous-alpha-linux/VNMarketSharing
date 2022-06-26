@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Principal;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,8 +17,10 @@ using AdsMarketSharing.Data;
 using AdsMarketSharing.DTOs.Account;
 using AdsMarketSharing.Interfaces;
 using AdsMarketSharing.Models;
+using AdsMarketSharing.Models.Token;
 using AdsMarketSharing.Enum;
 using AdsMarketSharing.Models.Auth;
+using AdsMarketSharing.DTOs.Token;
 using AutoMapper;
 
 namespace AdsMarketSharing.Repositories
@@ -101,34 +104,40 @@ namespace AdsMarketSharing.Repositories
                 {
                     throw new ServiceResponseException<ResponseStatus>(400,ResponseStatus.Failed,"Please fill the username or email");
                 }
+
                 // 2. Find account that corresspoding with request (included Email/Username);               
                 var foundAccountRole = await _context.AccountRoles
                     .Include(ar => ar.Account)
                     .Include(ar => ar.Role)
                     .FirstOrDefaultAsync(ar => ar.Account.Email == requestAccount.Email);
-
                 if(foundAccountRole == null)
                 {
                     throw new ServiceResponseException<ResponseStatus>(400,ResponseStatus.Failed,"Your account doesn't currently exist. Please register to use");
                 }
+
                 // 3. Verify password;
                 if(!VerifyPassword(foundAccountRole.Account, requestAccount.Password))
                 {
                     throw new ServiceResponseException<ResponseStatus>(400,ResponseStatus.Failed,"Your password is incorrectly");
                 }
+
                 // 4. Verify "IsActive" account;
                 if (!foundAccountRole.Account.IsActive)
                 {
                     throw new ServiceResponseException<ResponseStatus>(403, ResponseStatus.NoActivatedAccount, foundAccountRole.AccountId, "Your account are not activated");
                 }
-                // 5. Define the success response; 
+
+                // 5. Defne the refresh token; 
                 // Mainly release the last oupt of response is token
-                response.Data = new GetAccountInfoDTO 
-                { 
+                var tokenResponse = await GenerateJWTToken(foundAccountRole, DateTime.UtcNow.AddMinutes(1),DateTime.UtcNow.AddDays(1));
+
+                // 6. Define the response
+                response.Data = new GetAccountInfoDTO
+                {
                     AccountId = foundAccountRole.AccountId,
                     Email = foundAccountRole.Account.Email,
-                    AccessToken = CreateToken(foundAccountRole.AccountId, foundAccountRole.Account.Email, foundAccountRole.Role.Name),
-                    Password = requestAccount.Password,
+                    AccessToken = tokenResponse.Data.JWTToken,
+                    RefreshToken = tokenResponse.Data.RefreshToken,
                     Roles = new List<GetRoleDTO>() { 
                         new GetRoleDTO{ RoleName = foundAccountRole.Role.Name} 
                     }
@@ -238,6 +247,42 @@ namespace AdsMarketSharing.Repositories
             }
             return response;
         }
+        public async Task<ServiceResponse<AuthTokenResponse>> RefreshToken(AuthTokenRequest tokenRequest)
+        {
+            var response = new ServiceResponse<AuthTokenResponse>();
+            try
+            {            
+                var isValidTokenResponse = await ValidateJWTToken(tokenRequest);
+                if (!isValidTokenResponse.Status.Equals(ResponseStatus.Successed))
+                {
+                    throw new ServiceResponseException<ResponseStatus>(isValidTokenResponse.StatusCode, isValidTokenResponse.Status, isValidTokenResponse.ServerMessage);
+                }
+
+                // Generate new token
+                int accountId = int.Parse(GetClaimValue(tokenRequest.Token, "nameid"));
+                var dbAccount = await _context.AccountRoles
+                    .Include(a => a.Account)
+                    .Include(a => a.Role)
+                    .FirstOrDefaultAsync(a => a.AccountId == accountId);
+
+                // Define the response properties
+                response = await GenerateJWTToken(dbAccount, DateTime.UtcNow.AddMinutes(1), DateTime.UtcNow.AddDays(1));   
+            }
+            catch (ServiceResponseException<ResponseStatus> e)
+            {
+                // Define the response properties
+                response.Data = null;
+                response.Status = e.Value;
+                response.StatusCode = e.StatusCode;
+                response.Message = "The token cannot resolve";
+                response.ServerMessage = e.Message;
+            }
+            return response;
+        }
+        public Task<ServiceResponse<string>> RefreshToken(string token)
+        {
+            throw new NotImplementedException();
+        }
         public async Task<bool> EmailExists(string email)
         {
             return await _context.Accounts.AnyAsync(account => account.Email.ToLower() == email.ToLower());
@@ -279,40 +324,187 @@ namespace AdsMarketSharing.Repositories
                 return true;
             }  
         }
-        private async Task GenerateEmailConfirmation(GetAccountInfoDTO account) {
-            /*var confirmationlink = "https://localhost:44379/api/Account/ConfirmEmailLink?token=" + token + "&email=" + user.Email;*/
-
-        }
-     
         
         // Application token
-        private string CreateToken(int accountId, string email, string role)
+        private async Task<ServiceResponse<AuthTokenResponse>> GenerateJWTToken(AccountRole identityAccount,DateTime jwtExpiryTime, DateTime refreshjwtExpiryTime)
         {
-            List<Claim> claims = new List<Claim>()
+            var response = new ServiceResponse<AuthTokenResponse>();
+            try
             {
-                new Claim(ClaimTypes.NameIdentifier, accountId.ToString()),
-                new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, role)
-            };
+                // 1. Setting up the token description
+                List<Claim> claims = new List<Claim>()
+                {
+                    new Claim(ClaimTypes.NameIdentifier, identityAccount.Account.Id.ToString()),
+                    new Claim(ClaimTypes.Email, identityAccount.Account.Email),
+                    new Claim(ClaimTypes.Role, identityAccount.Role.Name),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+                SymmetricSecurityKey key = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value)
+                );
+                SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+                SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor()
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = jwtExpiryTime,
+                    SigningCredentials = credentials
+                };
+                JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+                SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
 
-            SymmetricSecurityKey key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value)
-            );
-                
-            SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+                // 2. Generate new refreshtoken
+                RefreshToken newRefreshToken = new RefreshToken()
+                {
+                    Token = RandomString(13) + Guid.NewGuid(),
+                    JwtId = token.Id,
+                    AccountId = identityAccount.AccountId,
+                    CreatedTime = DateTime.UtcNow,
+                    ExpireTime = refreshjwtExpiryTime,
+                    IsUsed = false,
+                    IsRevoked = false
+                };
+         
+                await _context.RefreshTokens.AddAsync(newRefreshToken);
+                await _context.SaveChangesAsync();
 
-            SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor()
+                // 3. Define the response properties
+                response.Data = new AuthTokenResponse()
+                {
+                    Token = token,
+                    RefreshToken = newRefreshToken.Token,
+                    JWTToken = tokenHandler.WriteToken(token)
+                };
+                response.Status = ResponseStatus.Successed;
+                response.StatusCode = 200;
+                response.Message = "Generated new token successfully";
+                response.ServerMessage = "Completed service";
+            }
+            catch (Exception e)
             {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddSeconds(30),
-                SigningCredentials = credentials
-            };
+                response.Data = null;
+                response.Status = ResponseStatus.Failed;
+                response.StatusCode = 500;
+                response.Message = "Failed to generate new authorization token";
+                response.ServerMessage = e.Message;
+            }
 
-
-            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
+            return response;
         }
+        private async Task<ServiceResponse<bool>> ValidateJWTToken(AuthTokenRequest authTokenRequest)
+        {
+            var response = new ServiceResponse<bool>();
+            var tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken validatedToken;
+            try
+            {
+                // Validate 1 - Validate JWT token format
+                var principal = tokenHandler.ValidateToken(authTokenRequest.Token, new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    // Clock skew compensates for server time drift.
+                    // We recommend 5 minutes or less:
+                    ClockSkew = TimeSpan.Zero,
+                    // Ensure the token hasn't expired:
+                    RequireExpirationTime = true,
+                    ValidateLifetime = false,
+                    // Ensure the token audience matches our audience value (default true):
+                    ValidateAudience = false,
+                    ValidateIssuer = false,
+                    // Specify the key used to sign the token:
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration.GetSection("AppSettings:Token").Value)),
+                    RequireSignedTokens = true
+                }, out validatedToken);
+
+                // Validate 2 - Validate encryption alg
+                if(validatedToken is JwtSecurityToken jwtSecurityToken)
+                {
+                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha512, StringComparison.InvariantCultureIgnoreCase);
+                    if (result == false) throw new ServiceResponseException<ResponseStatus>(403, ResponseStatus.NotAcceptableToken,"Your token is invalid");
+                }
+
+                // Validate 3 - Validate expiry time
+                var utcExpiryTime = long.Parse(principal.Claims.FirstOrDefault(x=> x.Type == JwtRegisteredClaimNames.Exp).Value);
+                var expiryDate = UnixTimeStampToDateTime(utcExpiryTime);
+                if(expiryDate > DateTime.UtcNow)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(403, ResponseStatus.NotAcceptableToken, "Your token has not yet expired");
+                }
+
+                // Validate 4 - Validate the existence of token
+                var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == authTokenRequest.RefreshToken);
+                if(storedToken == null)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(403, ResponseStatus.NotAcceptableToken, "Refresh token isn't existed");
+                }
+
+                // Validate 5 - Validate if it's used
+                if (storedToken.IsUsed)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.NotAcceptableToken, "Refresh token cannot be used");
+                }
+
+                // Validate 6 - Validate if revoked
+                if (storedToken.IsRevoked)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.NotAcceptableToken, "Token has been revoked");
+                }
+
+                // Validate 7 - Validate the id
+                if(storedToken.JwtId != principal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.NotAcceptableToken, "Token doesn't match");
+                }
+
+                // Validate 8 - Validate stored token expiry time
+                if(storedToken.ExpireTime < DateTime.UtcNow)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.NotAcceptableToken, "Refresh token has expired");
+                }
+
+                // update the token
+                storedToken.IsUsed = true;
+                _context.RefreshTokens.Update(storedToken);
+                await _context.SaveChangesAsync();
+
+                // Define the response
+                response.Data = true;
+                response.Message = "Token is valid";
+                response.ServerMessage = "Completed service";
+                response.Status = ResponseStatus.Successed;
+                response.StatusCode = 200;
+            }
+            catch (ServiceResponseException<ResponseStatus> e)
+            {
+                response.Data = false;
+                response.Message = "The token is detected, is incorrect";
+                response.ServerMessage = e.Message;
+                response.Status = ResponseStatus.NotAcceptableToken;
+                response.StatusCode = e.StatusCode != null ? e.StatusCode : 500;
+            }
+            return response;
+        }
+        private string GetClaimValue(string token, string claimType)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtSecurityToken = tokenHandler.ReadJwtToken(token) as JwtSecurityToken;
+            string stringClaimValue = jwtSecurityToken.Claims.First(claim => claim.Type == claimType).Value;
+
+            return stringClaimValue;
+        }
+        private DateTime UnixTimeStampToDateTime(long unixTimeStamp)
+        {
+            var dateTimeVal = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dateTimeVal = dateTimeVal.AddSeconds(unixTimeStamp).ToUniversalTime();
+
+            return dateTimeVal;
+        }
+        private string RandomString(int length)
+        {
+            var random = new Random();
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(x => x[random.Next(x.Length)]).ToArray());
+        }
+
     }
 }

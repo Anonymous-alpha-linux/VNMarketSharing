@@ -7,8 +7,8 @@ namespace AdsMarketSharing.DTOs.Account
     {
         public int AccountId { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
         public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
         public List<GetRoleDTO> Roles { get; set; }
 
     }

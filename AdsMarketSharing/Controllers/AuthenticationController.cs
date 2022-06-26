@@ -1,19 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Configuration;
 
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Collections.Generic;
 
 using AdsMarketSharing.Enum;
 using AdsMarketSharing.Models;
 using AdsMarketSharing.DTOs.Account;
 using AdsMarketSharing.Interfaces;
 using AdsMarketSharing.Models.Email;
-using System.Collections.Generic;
 using AdsMarketSharing.Models.Token;
-using Microsoft.Extensions.Configuration;
+using AdsMarketSharing.DTOs.Token;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -71,12 +72,12 @@ namespace AdsMarketSharing.Controllers
             }
             return StatusCode(registerResponse.StatusCode,registerResponse);
         }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginAccount loginAccount)
         {
             var loginResponse = await _authenticationService.Login(loginAccount);
-
-          
+            /*HttpContext.Response.Cookies = loginResponse.Data.RefreshToken;*/
             if(loginResponse.Status == ResponseStatus.NoActivatedAccount)
             {
                 var claims = new List<Claim>()
@@ -114,8 +115,9 @@ namespace AdsMarketSharing.Controllers
             return StatusCode(loginResponse.StatusCode, loginResponse);
             
         }
+
         [HttpGet("confirmEmail")]
-        public async Task<IActionResult> ActivateEmail(int userId, string token)
+        public async Task<IActionResult> ActivateAccount(int userId, string token)
         {
             var tokenValue = await _tokenService.GetClaimValue(token, "TokenType");
 
@@ -136,10 +138,12 @@ namespace AdsMarketSharing.Controllers
             }
             return Ok(response);
         }
-        /*[HttpGet("refreshToken")]*/
-       /* public async Task<IActionResult> RefreshToken()
+
+        [HttpGet("refreshtoken")]
+        public async Task<IActionResult> RefreshToken([FromBody] AuthTokenRequest authTokenRequest)
         {
-            return Ok();
-        }*/
+            var refreshTokenResponse = await _authenticationService.RefreshToken(authTokenRequest);
+            return StatusCode(refreshTokenResponse.StatusCode, refreshTokenResponse);  
+        }
     }
 }

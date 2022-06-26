@@ -13,19 +13,64 @@ using AdsMarketSharing.Enum;
 using System.Threading.Tasks;
 using System.Security.Principal;
 using System.Linq;
+using AdsMarketSharing.Models;
+using AdsMarketSharing.DTOs.Token;
+using Microsoft.Extensions.Configuration;
 
 namespace AdsMarketSharing.Repositories
 {
     public class TokenRepository : IToken
     {
-        public TokenConfiguration<string,TokenType> TokenConfiguration{ get; set; }
+        private readonly SQLExpressContext _context;
+        private readonly IConfiguration _configuration;
+
+        public TokenRepository(SQLExpressContext context,IConfiguration configuration)
+        {
+            _context = context;
+            _configuration = configuration;
+        }
+        public async Task<ServiceResponse<AuthTokenResponse>> GenerateAuthToken(List<Claim> claims, TokenConfiguration<string, TokenType> tokenConfiguration)
+        {
+            var response = new ServiceResponse<AuthTokenResponse>();
+
+            try
+            {
+
+            }
+            catch (ServiceResponseException<ResponseStatus> e)
+            {
+
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<AuthTokenResponse>> RefreshJWTToken(AuthTokenRequest tokenRequest)
+        {
+            var response = new ServiceResponse<AuthTokenResponse>();
+
+            try
+            {
+
+            }
+            catch (ServiceResponseException<ResponseStatus> e)
+            {
+
+                throw;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<ClaimResponse>> VerifyAuthToken(AuthTokenRequest tokenRequest)
+        {
+            var response = new ServiceResponse<ClaimResponse>();
+            return response;
+        }
 
         public string GenerateMailToken(List<Claim> claims,TokenConfiguration<string,TokenType> tokenConfiguration)
         {
-            this.TokenConfiguration = tokenConfiguration;
 
             SymmetricSecurityKey key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(TokenConfiguration.TokenKey)
+                Encoding.UTF8.GetBytes(tokenConfiguration.TokenKey)
             );
 
             SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
@@ -33,7 +78,7 @@ namespace AdsMarketSharing.Repositories
             SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = TokenConfiguration.ExpiresTime,
+                Expires = tokenConfiguration.ExpiresTime,
                 SigningCredentials = credentials
             };
 
@@ -62,7 +107,7 @@ namespace AdsMarketSharing.Repositories
                     ValidateAudience = false,
                     ValidateIssuer = false,
                     // Specify the key used to sign the token:
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(TokenConfiguration.TokenKey)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration.GetSection("AppSettings:MailToken").Value)),
                     RequireSignedTokens = true
                 },out validatedToken);
 
@@ -81,5 +126,7 @@ namespace AdsMarketSharing.Repositories
             string stringClaimValue = securityToken.Claims.First(claim => claim.Type == claimType).Value;
             return stringClaimValue;
         }
+
+       
     }
 }

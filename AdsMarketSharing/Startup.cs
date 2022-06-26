@@ -69,20 +69,21 @@ namespace AdsMarketSharing
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
             {
+                options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
+                    // Specify the key used to sign the token:
                     ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
                     // Clock skew compensates for server time drift.
                     // We recommend 5 minutes or less:
-                    ClockSkew = TimeSpan.FromMinutes(5),
+                    ClockSkew = TimeSpan.Zero,
                     // Ensure the token hasn't expired:
                     RequireExpirationTime = true,
                     ValidateLifetime = true,
                     // Ensure the token audience matches our audience value (default true):
                     ValidateAudience = false,
                     ValidateIssuer = false,
-                    // Specify the key used to sign the token:
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
                     RequireSignedTokens= true
                 };
             });
@@ -93,8 +94,7 @@ namespace AdsMarketSharing
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IMailService, MailService>()
                 .Configure<EmailConfiguration>(Configuration.GetSection("AppSettings:EmailSettings"));
-            services.AddSingleton<IToken, TokenRepository>();
-                
+            services.AddScoped<IToken, TokenRepository>();                
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
