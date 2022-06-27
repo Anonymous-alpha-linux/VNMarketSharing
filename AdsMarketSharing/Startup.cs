@@ -49,6 +49,7 @@ namespace AdsMarketSharing
           /*  services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<SQLExpressContext>();*/
             services.AddControllers();
             services.AddAutoMapper(typeof(Startup).Assembly);
+            // services.AddCors();
             services.AddSwaggerGen(s =>
             {
                 s.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -100,10 +101,10 @@ namespace AdsMarketSharing
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-    
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                //app.UseCors(builder => builder.AllowAnyOrigin().WithMethods("GET", "POST").AllowAnyHeader());
             }
 
             app.UseSwagger();
@@ -117,7 +118,6 @@ namespace AdsMarketSharing
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

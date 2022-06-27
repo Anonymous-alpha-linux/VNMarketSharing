@@ -1,38 +1,49 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
-using AdsMarketSharing.Services.Ads;
 using Microsoft.AspNetCore.Authorization;
 using AdsMarketSharing.Interfaces;
+using AdsMarketSharing.Services.Ads;
 using AdsMarketSharing.Models.ServiceUser;
+using AdsMarketSharing.Data;
 
 namespace AdsMarketSharing.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/collaborator")]
     public class CollaboratorController : Controller
     {
-        private readonly IAds _AdsService;
+        private readonly IAds _adsService;
+        private readonly SQLExpressContext _context;
 
-        public CollaboratorController(IAds adsService)
+        public CollaboratorController(IAds adsService,SQLExpressContext context)
         {
-            this._AdsService = adsService;
+            this._adsService = adsService;
+            this._context = context;
         }
-        private Collaborator firstPerson = new Collaborator()
-        {
-            Id = 1,
-            FirstName = "Organization",
-            LastName = "A",
-            CreatedAt = DateTime.Now,
-            Hosting_URL = "abc.com",
-            Port = 8000,
-            CurrentStatus = Enum.CollaboratorStatus.Annual
-        };
 
         [HttpGet]
         public ActionResult<Collaborator> GetCollaborator()
         {
-            return StatusCode(201,firstPerson);
+            return StatusCode(200);
+        }
+
+        [HttpPost("create")]
+        public IActionResult AddCollaborator()
+        {
+            return Ok();
+        }
+
+        [HttpPost("update")]
+        public IActionResult UpdateCollaborator()
+        {
+            return Ok();
+        }
+
+        [HttpDelete("delete")]
+        public IActionResult DeleteCollaborator()
+        {
+            return Ok();
         }
     }
 }
