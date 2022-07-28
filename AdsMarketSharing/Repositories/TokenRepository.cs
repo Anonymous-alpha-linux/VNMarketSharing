@@ -79,13 +79,18 @@ namespace AdsMarketSharing.Repositories
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = tokenConfiguration.ExpiresTime,
-                SigningCredentials = credentials
+                SigningCredentials = credentials,
             };
 
             JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
 
             return tokenHandler.WriteToken(token);
+        }
+        public async Task<ServiceResponse<MailTokenResponse>> GenerateScriptToken(List<Claim> claims, TokenConfiguration<string, TokenType> tokenConfiguration)
+        {
+            var response = new ServiceResponse<MailTokenResponse>();
+            return response;
         }
 
         public async Task<bool> ValidateMailToken(string token)
@@ -126,7 +131,5 @@ namespace AdsMarketSharing.Repositories
             string stringClaimValue = securityToken.Claims.First(claim => claim.Type == claimType).Value;
             return stringClaimValue;
         }
-
-       
     }
 }

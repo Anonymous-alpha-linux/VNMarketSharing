@@ -1,5 +1,4 @@
-﻿using AdsMarketSharing.Models.Auth;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
 namespace AdsMarketSharing.Pipeline
