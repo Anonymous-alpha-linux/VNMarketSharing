@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AdsMarketSharing.DTOs.Account
 {
-    public class AddAccountInfoDTO
+    public class RegisterNewAccountDTO
     {
         [Required]
         [EmailAddress]

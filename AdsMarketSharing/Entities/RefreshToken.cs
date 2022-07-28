@@ -1,9 +1,8 @@
-﻿using AdsMarketSharing.Models.Auth;
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AdsMarketSharing.Models.Token
+namespace AdsMarketSharing.Entities
 {
     public class RefreshToken
     {

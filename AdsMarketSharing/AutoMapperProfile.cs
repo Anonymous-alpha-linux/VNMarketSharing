@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using AdsMarketSharing.DTOs.Account;
-using AdsMarketSharing.Models.Auth;
+using AdsMarketSharing.Entities;
+using AdsMarketSharing.DTOs.File;
+using AdsMarketSharing.DTOs.User;
 
 namespace AdsMarketSharing
 {
@@ -8,9 +10,11 @@ namespace AdsMarketSharing
     {
         public AutoMapperProfile()
         {
-            CreateMap<AddAccountInfoDTO, Account>();
+            CreateMap<RegisterNewAccountDTO, Account>();
             CreateMap<Account, GetAccountInfoDTO>();
             CreateMap<AssignRoleToAccountDTO, AccountRole>();
+            CreateMap<AttachmentResponseDTO, Attachment>();
+            CreateMap<GenerateUserRequestDTO, User>();
         }
     }
 }

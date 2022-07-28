@@ -1,34 +1,25 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 
 using System;
-using System.Linq;
 using System.Text;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-using AdsMarketSharing.Services.Collaborator;
 using AdsMarketSharing.Data;
 using AdsMarketSharing.Interfaces;
 using AdsMarketSharing.Repositories;
-
-using Swashbuckle.AspNetCore.Filters;
+using AdsMarketSharing.Services.FileUpload;
 using AdsMarketSharing.Services.Email;
 using AdsMarketSharing.Models.Email;
-using AdsMarketSharing.Models.Token;
-using AdsMarketSharing.Enum;
+using Swashbuckle.AspNetCore.Filters;
+using AdsMarketSharing.Hubs;
 
 namespace AdsMarketSharing
 {
@@ -49,6 +40,22 @@ namespace AdsMarketSharing
           /*  services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<SQLExpressContext>();*/
             services.AddControllers();
             services.AddAutoMapper(typeof(Startup).Assembly);
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "AllowAPIRequestIO", builder => {
+                    builder.WithOrigins("http://localhost:3000");
+                    builder.AllowAnyHeader();
+                    builder.AllowCredentials();
+                    builder.AllowAnyMethod();
+                });
+ 
+            });
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
             services.AddSwaggerGen(s =>
             {
                 s.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -84,23 +91,26 @@ namespace AdsMarketSharing
                     // Ensure the token audience matches our audience value (default true):
                     ValidateAudience = false,
                     ValidateIssuer = false,
-                    RequireSignedTokens= true
+                    RequireSignedTokens = true
                 };
             });
-        
+            services.AddSignalR();
+
+            // Singleton Service
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IFileStorageService, CloudinaryStorageService>();
             // My services
-            services.AddScoped<ICollaborator, Collaborator>();
+            //services.AddScoped<ICollaborator, Collaborator>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IToken, TokenRepository>();                
             services.AddScoped<IMailService, MailService>()
                 .Configure<EmailConfiguration>(Configuration.GetSection("AppSettings:EmailSettings"));
-            services.AddScoped<IToken, TokenRepository>();                
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-    
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -116,11 +126,12 @@ namespace AdsMarketSharing
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthentication();
+            app.UseCors("AllowAPIRequestIO");
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<ChatHub>("/chat");
             });
         }
     }

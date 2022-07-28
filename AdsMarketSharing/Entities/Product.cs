@@ -1,0 +1,19 @@
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace AdsMarketSharing.Entities
+{
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public double Price { get; set; }
+        public int Inventory { get; set; }
+        public int SoldQuantity { get; set; }
+        [ForeignKey("user")]
+        public int SellerId { get; set; }
+        public User User { get; set; }
+        public int CategoryId { get; set; }
+        public List<ProductCategory> Categories { get; set; }
+    }
+}

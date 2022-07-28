@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AdsMarketSharing.Models.Auth
+namespace AdsMarketSharing.Entities
 {
     public class AccountRole
     {

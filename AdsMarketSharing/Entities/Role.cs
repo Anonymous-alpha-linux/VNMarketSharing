@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace AdsMarketSharing.Models.Auth
+namespace AdsMarketSharing.Entities
 {
     public class Role
     {

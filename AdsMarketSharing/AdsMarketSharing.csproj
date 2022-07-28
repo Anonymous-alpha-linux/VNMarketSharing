@@ -6,7 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.cs" />
+    <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
+    <PackageReference Include="CloudinaryDotNet" Version="1.19.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.26" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.26" />
@@ -14,6 +20,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.Design" Version="1.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.26">
@@ -27,6 +34,10 @@
 
   <ItemGroup>
     <Folder Include="DTOs\Ads\" />
+    <Folder Include="DTOs\Collaborator\" />
+    <Folder Include="Models\Auth\" />
+    <Folder Include="Services\Ads\" />
+    <Folder Include="Services\Notification\" />
   </ItemGroup>
 
 
