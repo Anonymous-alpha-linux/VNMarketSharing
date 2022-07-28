@@ -1,5 +1,4 @@
-﻿using AdsMarketSharing.Models.Auth;
-using AdsMarketSharing.Models.Token;
+﻿using AdsMarketSharing.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,13 +23,15 @@ namespace AdsMarketSharing.Data
     {
         public SQLExpressContext(DbContextOptions<SQLExpressContext> options) : base(options)
         {
-
         }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<AccountRole> AccountRoles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-
+        public DbSet<User> Users { get; set; }
+        public DbSet<Attachment> Attachments { get; set; } 
+       
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

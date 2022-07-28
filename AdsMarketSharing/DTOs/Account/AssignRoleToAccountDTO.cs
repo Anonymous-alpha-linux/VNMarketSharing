@@ -1,5 +1,4 @@
-﻿using AdsMarketSharing.Models.Auth;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace AdsMarketSharing.DTOs.Account
 {

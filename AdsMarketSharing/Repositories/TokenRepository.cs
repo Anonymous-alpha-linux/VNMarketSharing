@@ -89,7 +89,8 @@ namespace AdsMarketSharing.Repositories
         }
         public async Task<ServiceResponse<MailTokenResponse>> GenerateScriptToken(List<Claim> claims, TokenConfiguration<string, TokenType> tokenConfiguration)
         {
-            var response = new Ser
+            var response = new ServiceResponse<MailTokenResponse>();
+            return response;
         }
 
         public async Task<bool> ValidateMailToken(string token)
@@ -130,7 +131,5 @@ namespace AdsMarketSharing.Repositories
             string stringClaimValue = securityToken.Claims.First(claim => claim.Type == claimType).Value;
             return stringClaimValue;
         }
-
-       
     }
 }

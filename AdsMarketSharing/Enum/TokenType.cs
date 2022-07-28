@@ -5,6 +5,7 @@ namespace AdsMarketSharing.Enum
     public enum TokenType
     {
         EmailConfirm,
-        ClientValidate
+        ClientValidate,
+        ChangePassword
     }
 }

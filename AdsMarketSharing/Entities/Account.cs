@@ -1,10 +1,9 @@
 ﻿using AdsMarketSharing.Enum;
-using AdsMarketSharing.Models.Token;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace AdsMarketSharing.Models.Auth
+namespace AdsMarketSharing.Entities
 {
     public class Account
     {
@@ -21,6 +20,7 @@ namespace AdsMarketSharing.Models.Auth
         public AccountStatus Status { get; set; } = AccountStatus.Newbie;
         public List<AccountRole> AccountRoles { get; set; }
         public List<RefreshToken> RefreshToken { get; set; }
+        public User User { get; set; }
     }
 
 }
