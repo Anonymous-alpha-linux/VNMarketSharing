@@ -6,6 +6,7 @@ namespace AdsMarketSharing.Interfaces
     {
         IUserRepository UserRepository { get; }
         IAttachmentRepository AttachmentRepository { get; }
+        IReceiverAddressRepository ReceiverAddressRepository { get; }
         Task CompleteAsync();
     }
 }

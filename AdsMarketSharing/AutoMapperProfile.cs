@@ -15,6 +15,8 @@ namespace AdsMarketSharing
             CreateMap<AssignRoleToAccountDTO, AccountRole>();
             CreateMap<AttachmentResponseDTO, Attachment>();
             CreateMap<GenerateUserRequestDTO, User>();
+            CreateMap<AddAddressRequestDTO, ReceiverAddress>();
+            CreateMap<UpdateAddressRequestDTO, ReceiverAddress>();
         }
     }
 }
