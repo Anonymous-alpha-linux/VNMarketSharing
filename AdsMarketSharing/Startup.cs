@@ -43,7 +43,7 @@ namespace AdsMarketSharing
             services.AddCors(options =>
             {
                 options.AddPolicy(name: "AllowAPIRequestIO", builder => {
-                    builder.WithOrigins("http://localhost:3000");
+                    builder.WithOrigins("http://localhost:3000", "https://react-vnmarketsharing.netlify.app");
                     builder.AllowAnyHeader();
                     builder.AllowCredentials();
                     builder.AllowAnyMethod();

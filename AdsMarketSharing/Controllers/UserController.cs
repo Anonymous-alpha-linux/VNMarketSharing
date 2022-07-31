@@ -37,18 +37,19 @@ namespace AdsMarketSharing.Controllers
         [HttpGet]
         public async Task<IActionResult> GetInfo()
         {
-            string userIdStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
-            int.TryParse(userIdStr, out int userId);
+            string accountIdStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
+            int.TryParse(accountIdStr, out int accountId);
             try
             {
                 var user = await _context.Accounts.Include(acc => acc.User)
                     .ThenInclude(user => user.Avatar)
-                    .Where(account => account.Id == userId)
+                    .Where(account => account.Id == accountId)
                     .Select(acc => new { 
-                        Username = !string.IsNullOrEmpty(acc.User.OrganizationName) ? acc.User.OrganizationName : acc.Email, 
-                        Avatar = acc.User.Avatar.PublicPath 
+                        UserId = acc.User.Id,
+                        Username = !string.IsNullOrEmpty(acc.User.OrganizationName) ? acc.User.OrganizationName : acc.Email,
+                        Avatar = acc.User.Avatar.PublicPath
                     })
-                    .FirstAsync();
+                    .FirstOrDefaultAsync();
                 return Ok(user);
             }
             catch (System.Exception ex)
@@ -56,7 +57,6 @@ namespace AdsMarketSharing.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
         [HttpPost("avatar")]
         public async Task<IActionResult> ChangeAvatar([FromForm] UploadFileDTO request)
         {
@@ -106,7 +106,19 @@ namespace AdsMarketSharing.Controllers
             await _unitOfWork.CompleteAsync();
             return StatusCode(saveImageAction.StatusCode, new { NewAvatar = attachmentRecord.PublicPath });
         }
-
+        [HttpGet("info")]
+        public async Task<IActionResult> GetUserInfo([FromQuery]int userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.UserRepository.Find(user => user.Id == userId);
+                return Ok(user.FirstOrDefault());
+            }
+            catch (System.Exception exception)
+            {
+                return BadRequest("Cannot find your user information. Please specific it");
+            }   
+        }
         [HttpPut("updateInfo")]
         public async Task<IActionResult> UpdateInfo(GenerateUserRequestDTO request)
         {
@@ -117,18 +129,111 @@ namespace AdsMarketSharing.Controllers
             {
                 userRecord = userRecords.First();
             }
-            userRecord = _mapper.Map(request,userRecord);
+            userRecord = _mapper.Map(request,userRecord);          
             var response = await _unitOfWork.UserRepository.Upsert(userRecord);
             if(response == null)
             {
                 return NotFound("Update user info failed");
             }
-            return Ok("Updated successfully");
+            await _unitOfWork.CompleteAsync();
+            return Ok(new
+            {
+                OrganizationName = response.OrganizationName,
+                Message = "Updated successfully"
+            });
         }
         [HttpPost("upload/banner")]
         public async Task<IActionResult> UploadAds()
         {
             return Ok();
+        }
+
+
+        // 2. Address Visitor 
+        [HttpGet("addresses")]
+        public async Task<IActionResult> GetAddresses([FromQuery] int userId, int addressType) {
+            if(userId == null)
+            {
+                return BadRequest("Specify your user identifier");
+            }
+            var addressLst = await _unitOfWork.ReceiverAddressRepository.Find(address => address.UserId == userId && address.AddressType == addressType);
+            return Ok(addressLst);
+        }
+        [HttpGet("address/{addressId}")]
+        public async Task<IActionResult> GetSingleAddress([FromRoute]int addressId)
+        {
+            if (addressId == null)
+            {
+                return BadRequest("Specify your address identifier");
+            }
+            var address = await _unitOfWork.ReceiverAddressRepository.GetById(addressId);
+            if(address == null)
+            {
+                return NotFound();
+            }
+            return Ok(address);
+        }
+        [HttpPost("createAddress")]
+        public async Task<IActionResult> AddAddress([FromBody] AddAddressRequestDTO request) {
+            try
+            {
+                var receiverAddress = await _unitOfWork.ReceiverAddressRepository.Add(_mapper.Map<AddAddressRequestDTO,ReceiverAddress>(request));
+                await _unitOfWork.CompleteAsync();
+                return Ok(receiverAddress);
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(400, e.Message);
+            }
+        }
+        [HttpPut("updateAddress")]
+        public async Task<IActionResult> UpdateAddress(UpdateAddressRequestDTO request,int addressId) {
+            try
+            {
+
+                var userRecord = await _unitOfWork.ReceiverAddressRepository.GetById(addressId);
+
+                var newRecord = _mapper.Map<UpdateAddressRequestDTO, ReceiverAddress>(request,userRecord);
+
+                var newAddress = await _unitOfWork.ReceiverAddressRepository.Update(addressId,newRecord); 
+                if(newAddress == null)
+                {
+                    return BadRequest("There are no update");
+                }
+                await _unitOfWork.CompleteAsync();
+                return Ok(newAddress);
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+        [HttpDelete("removeAddress")]
+        public async Task<IActionResult> RemoveAddress(int addressId)
+        {
+            try
+            {
+                string nameIdentifierStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
+                var foundAddress = await _unitOfWork.ReceiverAddressRepository.GetById(addressId);
+                if(foundAddress == null) {
+                    return NotFound("No found items"); 
+                }
+                var foundUser = await _unitOfWork.UserRepository.GetById(foundAddress.UserId);
+
+                var isPermitted = foundUser.AccountId.ToString() == nameIdentifierStr;
+
+                if (!isPermitted) {
+                    return StatusCode(403, "You cannot delete this");
+                }
+
+                await _unitOfWork.ReceiverAddressRepository.Delete(addressId);
+                await _unitOfWork.CompleteAsync();
+                return Ok("Deleted");
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
     }
 }

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace AdsMarketSharing.Entities
 {
     public class User
     {
+        [Key]
         public int Id { get; set; }
         public string OrganizationName { get; set; }
         public string Biography { get; set; }
@@ -13,5 +15,6 @@ namespace AdsMarketSharing.Entities
         public Attachment Avatar { get; set; }
         public int AccountId { get; set; }
         public Account Account { get; set; }
+        public List<ReceiverAddress> receiverAddress { get;set; }
     }
 }

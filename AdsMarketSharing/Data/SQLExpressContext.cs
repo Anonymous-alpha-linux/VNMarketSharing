@@ -30,7 +30,7 @@ namespace AdsMarketSharing.Data
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Attachment> Attachments { get; set; } 
-       
+        public DbSet<ReceiverAddress> ReceiverAddresses { get; set; }
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -19,10 +19,10 @@ namespace AdsMarketSharing.Pipeline
         }
 
         // Pipeline stage:
-        public async Task ConfirmEmail(HttpContext context)
-        {
-           
-        }
+        //public Task ConfirmEmail(HttpContext context)
+        //{
+        //    return;
+        //}
 
     }
 }
