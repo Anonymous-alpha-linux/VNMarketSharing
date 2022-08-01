@@ -34,9 +34,9 @@ namespace AdsMarketSharing.Repositories
             return updatedRecord;
         }
 
-        public virtual Task<IEnumerable<T>> All()
+        public virtual async Task<IEnumerable<T>> All()
         {
-            throw new NotImplementedException();
+            return dbSet;
         }
 
         public virtual async Task<bool> Delete(int id)

@@ -13,7 +13,6 @@ namespace AdsMarketSharing.Entities
         [ForeignKey("user")]
         public int SellerId { get; set; }
         public User User { get; set; }
-        public int CategoryId { get; set; }
-        public List<ProductCategory> Categories { get; set; }
+        public List<ProductCategory> ProductCategories { get; set; }
     }
 }

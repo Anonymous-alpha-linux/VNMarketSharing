@@ -31,7 +31,9 @@ namespace AdsMarketSharing.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Attachment> Attachments { get; set; } 
         public DbSet<ReceiverAddress> ReceiverAddresses { get; set; }
-        
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<ProductCategory> ProductCategories { get; set; }        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -42,6 +44,7 @@ namespace AdsMarketSharing.Data
                 new Role { Id=4,Name = Static.AccountRole.Collaborator }
             );
             modelBuilder.Entity<AccountRole>().HasKey(accountRole => new { accountRole.AccountId ,accountRole.RoleId });
+            modelBuilder.Entity<ProductCategory>().HasKey(productCategory => new {productCategory.ProductId, productCategory.CategoryId });
         }
 
     }
