@@ -3,6 +3,7 @@ using AdsMarketSharing.DTOs.Account;
 using AdsMarketSharing.Entities;
 using AdsMarketSharing.DTOs.File;
 using AdsMarketSharing.DTOs.User;
+using AdsMarketSharing.DTOs.Product;
 
 namespace AdsMarketSharing
 {
@@ -17,6 +18,8 @@ namespace AdsMarketSharing
             CreateMap<GenerateUserRequestDTO, User>();
             CreateMap<AddAddressRequestDTO, ReceiverAddress>();
             CreateMap<UpdateAddressRequestDTO, ReceiverAddress>();
+            CreateMap<AddCategoryRequestDTO, Category>();
+            CreateMap<UpdateCategoryRequestDTO, Category>();
         }
     }
 }
