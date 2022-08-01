@@ -11,6 +11,10 @@ namespace AdsMarketSharing.Repositories
         public IAttachmentRepository AttachmentRepository { get; private set; }
         public IReceiverAddressRepository ReceiverAddressRepository { get; private set; }
 
+        public IProductionCategoryRepository ProductionCategoryRepository { get; private set; }
+        public ICategoryRepository CategoryRepository { get; private set; }
+
+
         private readonly SQLExpressContext _dbContext;
         public UnitOfWork(SQLExpressContext dbContext)
         {
@@ -18,6 +22,9 @@ namespace AdsMarketSharing.Repositories
             UserRepository = new UserRepository(dbContext);
             AttachmentRepository = new AttachmentRepository(dbContext);
             ReceiverAddressRepository = new ReceiverAddressRepository(dbContext);
+            ProductionCategoryRepository = new ProductCategoryRepositoty(dbContext);
+            CategoryRepository = new CategoryRepository(dbContext);
+            
         }
 
         public async Task CompleteAsync()

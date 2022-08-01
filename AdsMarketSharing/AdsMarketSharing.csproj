@@ -8,6 +8,8 @@
   <ItemGroup>
     <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.cs" />
     <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801043912_AddCategoryModel.cs" />
+    <Compile Remove="Migrations\20220801043912_AddCategoryModel.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
