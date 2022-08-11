@@ -10,6 +10,18 @@
     <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.Designer.cs" />
     <Compile Remove="Migrations\20220801043912_AddCategoryModel.cs" />
     <Compile Remove="Migrations\20220801043912_AddCategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801044047_AddCategoryModel.cs" />
+    <Compile Remove="Migrations\20220801044047_AddCategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801084740_Add field level and inverse prop CategoryModel.cs" />
+    <Compile Remove="Migrations\20220801084740_Add field level and inverse prop CategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801085218_Add field level and inverse prop CategoryModel.cs" />
+    <Compile Remove="Migrations\20220801085218_Add field level and inverse prop CategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801140202_add field list of category model.cs" />
+    <Compile Remove="Migrations\20220801140202_add field list of category model.Designer.cs" />
+    <Compile Remove="Migrations\20220802160134_update onDelete event in category model.cs" />
+    <Compile Remove="Migrations\20220802160134_update onDelete event in category model.Designer.cs" />
+    <Compile Remove="Migrations\20220802160759_AddCategoryModel.cs" />
+    <Compile Remove="Migrations\20220802160759_AddCategoryModel.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AdsMarketSharing.Migrations
 {
     [DbContext(typeof(SQLExpressContext))]
-    [Migration("20220801044047_AddCategoryModel")]
-    partial class AddCategoryModel
+    [Migration("20220811021257_Modify price field on product table")]
+    partial class Modifypricefieldonproducttable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -95,10 +95,15 @@ namespace AdsMarketSharing.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PublicPath")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
 
                     b.ToTable("Attachments");
                 });
@@ -110,10 +115,18 @@ namespace AdsMarketSharing.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("ParentCategoryId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentCategoryId");
 
                     b.ToTable("Categories");
                 });
@@ -125,14 +138,17 @@ namespace AdsMarketSharing.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Inventory")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("SellerId")
                         .HasColumnType("int");
@@ -335,6 +351,20 @@ namespace AdsMarketSharing.Migrations
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("AdsMarketSharing.Entities.Attachment", b =>
+                {
+                    b.HasOne("AdsMarketSharing.Entities.Product", null)
+                        .WithMany("Attachment")
+                        .HasForeignKey("ProductId");
+                });
+
+            modelBuilder.Entity("AdsMarketSharing.Entities.Category", b =>
+                {
+                    b.HasOne("AdsMarketSharing.Entities.Category", "ParentCategory")
+                        .WithMany("SubCategories")
+                        .HasForeignKey("ParentCategoryId");
                 });
 
             modelBuilder.Entity("AdsMarketSharing.Entities.Product", b =>

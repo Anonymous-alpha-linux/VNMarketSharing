@@ -36,7 +36,7 @@ namespace AdsMarketSharing.Repositories
 
         public virtual async Task<IEnumerable<T>> All()
         {
-            return dbSet;
+            return await dbSet.AsNoTracking().ToListAsync();
         }
 
         public virtual async Task<bool> Delete(int id)
