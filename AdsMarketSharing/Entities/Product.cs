@@ -10,9 +10,9 @@ namespace AdsMarketSharing.Entities
         public double Price { get; set; }
         public int Inventory { get; set; }
         public int SoldQuantity { get; set; }
-        [ForeignKey("user")]
-        public int SellerId { get; set; }
         public User User { get; set; }
+        [ForeignKey(nameof(User))]
+        public int SellerId { get; set; }
         public List<ProductCategory> ProductCategories { get; set; }
     }
 }
