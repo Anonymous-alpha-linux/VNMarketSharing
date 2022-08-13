@@ -4,14 +4,16 @@ using AdsMarketSharing.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AdsMarketSharing.Migrations
 {
     [DbContext(typeof(SQLExpressContext))]
-    partial class SQLExpressContextModelSnapshot : ModelSnapshot
+    [Migration("20220811075408_Add Userpage model")]
+    partial class AddUserpagemodel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,15 +155,15 @@ namespace AdsMarketSharing.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(9,2)");
 
-                    b.Property<int>("SoldQuantity")
+                    b.Property<int>("SellerId")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserPageId")
+                    b.Property<int>("SoldQuantity")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserPageId");
+                    b.HasIndex("SellerId");
 
                     b.ToTable("Products");
                 });
@@ -401,9 +403,9 @@ namespace AdsMarketSharing.Migrations
 
             modelBuilder.Entity("AdsMarketSharing.Entities.Product", b =>
                 {
-                    b.HasOne("AdsMarketSharing.Entities.UserPage", "UserPages")
-                        .WithMany("Products")
-                        .HasForeignKey("UserPageId")
+                    b.HasOne("AdsMarketSharing.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("SellerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

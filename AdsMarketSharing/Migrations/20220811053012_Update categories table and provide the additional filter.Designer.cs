@@ -4,14 +4,16 @@ using AdsMarketSharing.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AdsMarketSharing.Migrations
 {
     [DbContext(typeof(SQLExpressContext))]
-    partial class SQLExpressContextModelSnapshot : ModelSnapshot
+    [Migration("20220811053012_Update categories table and provide the additional filter")]
+    partial class Updatecategoriestableandprovidetheadditionalfilter
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,15 +155,15 @@ namespace AdsMarketSharing.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(9,2)");
 
-                    b.Property<int>("SoldQuantity")
+                    b.Property<int>("SellerId")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserPageId")
+                    b.Property<int>("SoldQuantity")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserPageId");
+                    b.HasIndex("SellerId");
 
                     b.ToTable("Products");
                 });
@@ -359,15 +361,9 @@ namespace AdsMarketSharing.Migrations
                         .HasColumnType("nvarchar(14)")
                         .HasMaxLength(14);
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("UserPages");
+                    b.ToTable("UserPage");
                 });
 
             modelBuilder.Entity("AdsMarketSharing.Entities.AccountRole", b =>
@@ -401,9 +397,9 @@ namespace AdsMarketSharing.Migrations
 
             modelBuilder.Entity("AdsMarketSharing.Entities.Product", b =>
                 {
-                    b.HasOne("AdsMarketSharing.Entities.UserPage", "UserPages")
-                        .WithMany("Products")
-                        .HasForeignKey("UserPageId")
+                    b.HasOne("AdsMarketSharing.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("SellerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -426,7 +422,7 @@ namespace AdsMarketSharing.Migrations
             modelBuilder.Entity("AdsMarketSharing.Entities.ReceiverAddress", b =>
                 {
                     b.HasOne("AdsMarketSharing.Entities.User", "User")
-                        .WithMany("ReceiverAddress")
+                        .WithMany("receiverAddress")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -452,15 +448,6 @@ namespace AdsMarketSharing.Migrations
                     b.HasOne("AdsMarketSharing.Entities.Attachment", "Avatar")
                         .WithMany()
                         .HasForeignKey("AttachmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("AdsMarketSharing.Entities.UserPage", b =>
-                {
-                    b.HasOne("AdsMarketSharing.Entities.User", "User")
-                        .WithOne("Page")
-                        .HasForeignKey("AdsMarketSharing.Entities.UserPage", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
