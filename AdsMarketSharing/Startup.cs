@@ -37,8 +37,11 @@ namespace AdsMarketSharing
         {
             services.AddOptions();
             services.AddDbContext<SQLExpressContext>(x => x.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-          /*  services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<SQLExpressContext>();*/
-            services.AddControllers();
+            /*  services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<SQLExpressContext>();*/
+            services.AddControllers().AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            });
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddCors(options =>
             {

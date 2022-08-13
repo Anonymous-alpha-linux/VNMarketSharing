@@ -10,6 +10,28 @@
     <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.Designer.cs" />
     <Compile Remove="Migrations\20220801043912_AddCategoryModel.cs" />
     <Compile Remove="Migrations\20220801043912_AddCategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801044047_AddCategoryModel.cs" />
+    <Compile Remove="Migrations\20220801044047_AddCategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801084740_Add field level and inverse prop CategoryModel.cs" />
+    <Compile Remove="Migrations\20220801084740_Add field level and inverse prop CategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801085218_Add field level and inverse prop CategoryModel.cs" />
+    <Compile Remove="Migrations\20220801085218_Add field level and inverse prop CategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220801140202_add field list of category model.cs" />
+    <Compile Remove="Migrations\20220801140202_add field list of category model.Designer.cs" />
+    <Compile Remove="Migrations\20220802160134_update onDelete event in category model.cs" />
+    <Compile Remove="Migrations\20220802160134_update onDelete event in category model.Designer.cs" />
+    <Compile Remove="Migrations\20220802160759_AddCategoryModel.cs" />
+    <Compile Remove="Migrations\20220802160759_AddCategoryModel.Designer.cs" />
+    <Compile Remove="Migrations\20220811045304_Update categories table.cs" />
+    <Compile Remove="Migrations\20220811045304_Update categories table.Designer.cs" />
+    <Compile Remove="Migrations\20220811045427_Update categories table.cs" />
+    <Compile Remove="Migrations\20220811045427_Update categories table.Designer.cs" />
+    <Compile Remove="Migrations\20220811045849_Update categories table and provide the additional filter.cs" />
+    <Compile Remove="Migrations\20220811045849_Update categories table and provide the additional filter.Designer.cs" />
+    <Compile Remove="Migrations\20220811052449_Update categories table and provide the additional filter.cs" />
+    <Compile Remove="Migrations\20220811052449_Update categories table and provide the additional filter.Designer.cs" />
+    <Compile Remove="Migrations\20220811080024_Add relationship of product with userpage.cs" />
+    <Compile Remove="Migrations\20220811080024_Add relationship of product with userpage.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,6 +40,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.26" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.26" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.28" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.26">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

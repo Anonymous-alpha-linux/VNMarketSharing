@@ -1,4 +1,6 @@
-﻿namespace AdsMarketSharing.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AdsMarketSharing.Entities
 {
     public class Attachment
     {
