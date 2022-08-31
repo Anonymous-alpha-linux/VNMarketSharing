@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
 
 namespace AdsMarketSharing.Entities
 {
@@ -17,10 +15,11 @@ namespace AdsMarketSharing.Entities
         public bool InPages { get; set; }
         public string Description { get; set; }
         public int SoldQuantity { get; set; }
+        public bool HasAccepted { get; set; } = false;
         [ForeignKey(nameof(UserPage))]
         public int UserPageId { get; set; }
-        public UserPage UserPages { get; set; }
+        public UserPage UserPage { get; set; }
         public List<ProductCategory> ProductCategories { get; set; }
-        public List<Attachment> Attachment { get; set; }
+        public List<Attachment> Attachments { get; set; }
     }
 }

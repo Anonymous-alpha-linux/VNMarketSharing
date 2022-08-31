@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using System.Security.Claims;
+using AdsMarketSharing.DTOs.File;
+using Microsoft.AspNetCore.Http;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -32,18 +34,16 @@ namespace AdsMarketSharing.Controllers
             _fileStorageService = fileStorageService;
         }
 
-
         [HttpGet("")]
         public async Task<IActionResult> GetProductList([FromQuery]FilterProductRequestDTO filterProductRequestDTO)
         {
             var productLstQuery = _dbContext.Products
                 .AsNoTracking()
                 .OrderBy(p => p.Name)
-                .Include(p => p.UserPages)
+                .Include(p => p.UserPage)
                 .Include(p => p.ProductCategories)
                     .ThenInclude(p => p.Category)
                 .AsQueryable();
-
 
             var result = await productLstQuery
                 .ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider)
@@ -63,7 +63,7 @@ namespace AdsMarketSharing.Controllers
             var product = await _dbContext.Products
                 .AsNoTracking()
                 .OrderBy(p => p.Name)
-                .Include(p => p.UserPages)
+                .Include(p => p.UserPage)
                 .Include(p => p.ProductCategories)
                     .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(p => p.Id == id);
@@ -79,7 +79,7 @@ namespace AdsMarketSharing.Controllers
 
         [Authorize]
         [HttpGet("me")]
-        public async Task<IActionResult> GetMyProductList(FilterProductRequestDTO filter)
+        public async Task<IActionResult> GetMyProductList([FromQuery]FilterProductRequestDTO filter)
         {
             // 1. Get User Identity
             string accountIdStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
@@ -95,15 +95,41 @@ namespace AdsMarketSharing.Controllers
             }
 
             // 2. Find the situation of production list
-            var productLst = _dbContext.Products.Where(p => p.UserPageId == userPage.Id).AsQueryable();
+            var productLstQuery = _dbContext.Products
+                .AsNoTracking()
+                .OrderBy(p => p.Name)
+                .Include(p => p.UserPage)
+                .Include(p => p.ProductCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Where(p => p.UserPageId == userPage.Id)
+                .AsQueryable();
 
-            var result = await productLst.ToListAsync();
+            // 3. Filter product list{
+            productLstQuery = productLstQuery.Skip((filter.Page - 1) * filter.Take).Take(filter.Take);
+
+            var result = await productLstQuery
+                .ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
             return Ok(result);
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateNewProduct([FromBody]AddProductRequestDTO request)
+        private async Task<List<AttachmentResponseDTO>> CreateFolderAndSaveImage(List<IFormFile> files) 
         {
+            string usernameStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.Email).Value;
+
+            return files.Select((file) => {
+                return _fileStorageService.CreateFolderAndSaveImage(file.FileName, file.OpenReadStream(), usernameStr).Result.Data;
+            }).ToList();
+        }
+        [Authorize]
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateNewProduct([FromForm]AddProductRequestDTO request)
+        {
+            // 1. Handle IFormFile
+            request.Attachments = await CreateFolderAndSaveImage(request.Files);
+
+            // 2. Upload product
             var product = _mapper.Map<Product>(request);
 
             try
@@ -122,11 +148,41 @@ namespace AdsMarketSharing.Controllers
                 return StatusCode(500,e.Message);
             }
         }
+        [Authorize]
+        [HttpPost("uploadFiles")]
+        public async Task<ActionResult<List<AttachmentResponseDTO>>> UploadImages(IFormFile[] formFiles)
+        {
+            var attachmentResList = new List<AttachmentResponseDTO>();
+            // 1. Create folder on cloudinary 
+            string usernameStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.Email).Value;
+            var createFolderAction = await _fileStorageService.CreateFolder(usernameStr);
+
+            if (createFolderAction.Status != Enum.ResponseStatus.Successed)
+            {
+                return StatusCode(createFolderAction.StatusCode, attachmentResList);
+            }
+            // 2. Upload the image to cloudinary
+            
+            for (int i = 0; i < formFiles.Length; i++)
+            {
+                // 3. Save as attachment    
+                var file = formFiles[i];
+                var saveImageAction = await _fileStorageService.SaveImage(file.FileName, file.OpenReadStream(), createFolderAction.Data);
+                if (saveImageAction.Status != Enum.ResponseStatus.Successed)
+                {
+                    return StatusCode(saveImageAction.StatusCode, attachmentResList);
+                }
+                attachmentResList.Add(saveImageAction.Data);
+            }
+
+            return Ok(attachmentResList);
+        }
 
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateProduct([FromBody]AddProductRequestDTO request,[FromQuery] int id)
+        public async Task<IActionResult> UpdateProduct([FromForm]AddProductRequestDTO request,[FromQuery] int id)
         {
             var product = await _dbContext.Products
+                .Include(p => p.Attachments)
                 .Include(p => p.ProductCategories)
                 .ThenInclude(pc => pc.Category)
                 .FirstOrDefaultAsync(p => p.Id == id);
@@ -135,9 +191,10 @@ namespace AdsMarketSharing.Controllers
 
             try
             {
-                var newProduct = _mapper.Map(request, product);
+                request.Attachments = await CreateFolderAndSaveImage(request.Files);
+                product = _mapper.Map(request, product);
 
-               _dbContext.Update(newProduct);
+               //_dbContext.Update(newProduct);
                 await _dbContext.SaveChangesAsync();
                 return Ok("Updated");
             }
@@ -161,30 +218,31 @@ namespace AdsMarketSharing.Controllers
         }
 
         // GET: api/product/categories
+        [Authorize]
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategoryList([FromQuery]GetCategoryRequestDTO request)
         {
             try
             {
-                var categories = _dbContext.Categories.Include(c=> c.SubCategories)
-                .Where(c => c.Level == request.Level)
-                .AsQueryable();
+                var categories = _dbContext.Categories
+                                .Where(c => c.Level == request.Level)
+                                .AsQueryable();
 
                 if (request.ParentId != null)
                 {
                     categories = categories.Where(c => c.ParentCategoryId == request.ParentId);
                 }
                 
-                var result = await categories.Skip((request.Page - 1) * request.Take)
-                    .Take(request.Take)
-                    .Select(c => new
-                    {
-                        c.Id,
-                        c.Name,
-                        c.Level,
-                        c.ParentCategoryId,
-                        SubCategoryCount= c.SubCategories.Count
-                    }).ToListAsync();
+                // Filter layers
+                if(request.Take.HasValue && request.Page.HasValue)
+                {
+                    categories = categories.Skip(((int)request.Page - 1) * (int)request.Take)
+                    .Take((int)request.Take).AsQueryable();
+                }
+          
+                var result = await categories.ProjectTo<GetCategoryResponseDTO>(_mapper.ConfigurationProvider)
+                    .ToListAsync();
+
 
                 return Ok(result);
             }
@@ -194,6 +252,22 @@ namespace AdsMarketSharing.Controllers
             }
         }
 
+        [HttpGet("categories/all")]
+        public async Task<IActionResult> GetAllCategories()
+        {
+            try
+            {
+                var categories = await _dbContext.Categories
+                    .ProjectTo<GetCategoryResponseDTO>(_mapper.ConfigurationProvider)
+                    .ToListAsync();
+
+                return Ok(categories);
+            }
+            catch (System.Exception exception)
+            {
+                return StatusCode(500 ,exception.Message); ;
+            }
+        }
         // GET: api/product/category
         [HttpGet("category")]
         public async Task<IActionResult> GetSingleCategory([FromQuery] int id)

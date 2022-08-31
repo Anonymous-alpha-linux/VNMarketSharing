@@ -54,7 +54,9 @@ namespace AdsMarketSharing.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<ProductCategory> ProductCategories { get; set; }
         public DbSet<UserPage> UserPages { get; set; }
-
+        public DbSet<ProductClassify> ProductClassifies { get; set; }
+        public DbSet<ProductClassifyType> ProductClassifyTypes { get; set; }
+        public DbSet<ProductClassfiyDetail> ProductClassfiyDetails { get; set; }
 
     }
 }

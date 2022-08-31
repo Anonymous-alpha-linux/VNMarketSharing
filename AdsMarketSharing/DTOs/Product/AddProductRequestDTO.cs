@@ -1,7 +1,9 @@
-﻿using AdsMarketSharing.Validations;
+﻿using AdsMarketSharing.DTOs.File;
+using AdsMarketSharing.Validations;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace AdsMarketSharing.DTOs.Product
 {
@@ -19,6 +21,9 @@ namespace AdsMarketSharing.DTOs.Product
         public List<int> CategoryIds { get; set; }
         [FileSizeValidator(5)]
         [ContentTypeValidator(ContentTypeGroup.Image)]
-        public IFormFile File { get; set; }
+        public List<IFormFile> Files { get; set; }
+        [JsonIgnore]
+        public List<AttachmentResponseDTO> Attachments { get; set; }
+        public List<AddProductClassifyRequestDTO> Classifies { get; set; }
     }
 }

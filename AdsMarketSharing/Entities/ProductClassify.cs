@@ -6,7 +6,8 @@ namespace AdsMarketSharing.Entities
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int SoldQuantity { get; set; }
-        public List<string> ItemType { get; set; }
+        public int ProductId { get; set; }
+        public Product Product { get; set; }
+        public List<ProductClassifyType> ProductClassifyTypes { get; set; }
     }
 }

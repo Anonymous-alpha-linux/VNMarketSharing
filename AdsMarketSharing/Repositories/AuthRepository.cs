@@ -508,17 +508,7 @@ namespace AdsMarketSharing.Repositories
             return response;        
         }
 
-
-
-
-
-
-
-
-
-
-
-        // Authentication
+        // Authorization Helpers
         private void CreateHashedPassword(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using (var hmac= new System.Security.Cryptography.HMACSHA512()){
@@ -616,6 +606,7 @@ namespace AdsMarketSharing.Repositories
             try
             {
                 var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == authTokenRequest.RefreshToken);
+
                 // Validate 1 - Validate JWT token format
                 var principal = tokenHandler.ValidateToken(authTokenRequest.Token, new TokenValidationParameters()
                 {
