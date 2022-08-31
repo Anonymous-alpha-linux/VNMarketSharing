@@ -6,7 +6,7 @@ namespace AdsMarketSharing.DTOs.Product
     {
         [Range(1, int.MaxValue)]
         public int Page { get; set; } = 1;
-        [Range(0, 5)]
+        [Range(0, 10)]
         public int Take { get; set; } = 5;
         public bool FollowAlpha { get; set; } = true;
         public bool FollowPrice { get; set; } = false;

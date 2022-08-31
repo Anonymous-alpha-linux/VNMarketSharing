@@ -32,6 +32,8 @@
     <Compile Remove="Migrations\20220811052449_Update categories table and provide the additional filter.Designer.cs" />
     <Compile Remove="Migrations\20220811080024_Add relationship of product with userpage.cs" />
     <Compile Remove="Migrations\20220811080024_Add relationship of product with userpage.Designer.cs" />
+    <Compile Remove="Migrations\20220813153816_Valid field name userpage of product table.cs" />
+    <Compile Remove="Migrations\20220813153816_Valid field name userpage of product table.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
