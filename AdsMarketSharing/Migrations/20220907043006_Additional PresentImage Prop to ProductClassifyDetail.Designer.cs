@@ -4,14 +4,16 @@ using AdsMarketSharing.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AdsMarketSharing.Migrations
 {
     [DbContext(typeof(SQLExpressContext))]
-    partial class SQLExpressContextModelSnapshot : ModelSnapshot
+    [Migration("20220907043006_Additional PresentImage Prop to ProductClassifyDetail")]
+    partial class AdditionalPresentImageProptoProductClassifyDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,9 +140,6 @@ namespace AdsMarketSharing.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -162,9 +161,6 @@ namespace AdsMarketSharing.Migrations
 
                     b.Property<int>("SoldQuantity")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("UserPageId")
                         .HasColumnType("int");
@@ -193,11 +189,6 @@ namespace AdsMarketSharing.Migrations
 
             modelBuilder.Entity("AdsMarketSharing.Entities.ProductClassfiyDetail", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
                     b.Property<int>("ClassifyTypeKeyId")
                         .HasColumnType("int");
 
@@ -215,9 +206,7 @@ namespace AdsMarketSharing.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(9,2)");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClassifyTypeKeyId");
+                    b.HasKey("ClassifyTypeKeyId", "ClassifyTypeValueId");
 
                     b.HasIndex("ClassifyTypeValueId");
 

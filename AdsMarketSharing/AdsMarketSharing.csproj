@@ -34,23 +34,33 @@
     <Compile Remove="Migrations\20220811080024_Add relationship of product with userpage.Designer.cs" />
     <Compile Remove="Migrations\20220813153816_Valid field name userpage of product table.cs" />
     <Compile Remove="Migrations\20220813153816_Valid field name userpage of product table.Designer.cs" />
+    <Compile Remove="Migrations\20220901030410_Add Product Classify, Classify Type and Classify Type Detail Entity.cs" />
+    <Compile Remove="Migrations\20220901030410_Add Product Classify, Classify Type and Classify Type Detail Entity.Designer.cs" />
+    <Compile Remove="Migrations\20220901042430_modify property name of Product Classify Type.cs" />
+    <Compile Remove="Migrations\20220901042430_modify property name of Product Classify Type.Designer.cs" />
+    <Compile Remove="Migrations\20220907131428_Set nullable property of ProductClassifyDetail.cs" />
+    <Compile Remove="Migrations\20220907131428_Set nullable property of ProductClassifyDetail.Designer.cs" />
+    <Compile Remove="Migrations\20220907131808_Set nullable property of ProductClassifyDetail.cs" />
+    <Compile Remove="Migrations\20220907131808_Set nullable property of ProductClassifyDetail.Designer.cs" />
+    <Compile Remove="Migrations\20220907132204_Modify primary key Id from ProductClassifyDetail.cs" />
+    <Compile Remove="Migrations\20220907132204_Modify primary key Id from ProductClassifyDetail.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
     <PackageReference Include="CloudinaryDotNet" Version="1.19.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.26" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.28" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.26" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.28" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.28" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.26">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.28">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.26" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.25" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.28" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.28" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.Design" Version="1.1.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.25">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.28">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

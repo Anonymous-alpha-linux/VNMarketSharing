@@ -2,9 +2,9 @@
 
 namespace AdsMarketSharing.DTOs.Product
 {
-    public class AddProductClassifyRequestDTO
+    public class GetProductClassifyTypeResponseDTO
     {
+        public int Id { get; set; }
         public string Name { get; set; }
-        public string[] ClassifyTypes { get; set; }
     }
 }

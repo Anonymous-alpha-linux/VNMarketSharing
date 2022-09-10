@@ -42,7 +42,9 @@ namespace AdsMarketSharing.Controllers
                 .OrderBy(p => p.Name)
                 .Include(p => p.UserPage)
                 .Include(p => p.ProductCategories)
-                    .ThenInclude(p => p.Category)
+                    .ThenInclude(pc => pc.Category)
+                .Include(p => p.ProductClassifies)
+                    .ThenInclude(pc => pc.ProductClassifyTypes)
                 .AsQueryable();
 
             var result = await productLstQuery
@@ -101,6 +103,8 @@ namespace AdsMarketSharing.Controllers
                 .Include(p => p.UserPage)
                 .Include(p => p.ProductCategories)
                     .ThenInclude(pc => pc.Category)
+                .Include(p => p.ProductClassifies)
+                    .ThenInclude(pc => pc.ProductClassifyTypes)
                 .Where(p => p.UserPageId == userPage.Id)
                 .AsQueryable();
 
@@ -119,6 +123,10 @@ namespace AdsMarketSharing.Controllers
             string usernameStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.Email).Value;
 
             return files.Select((file) => {
+                if(file == null)
+                {
+                    return null;
+                }
                 return _fileStorageService.CreateFolderAndSaveImage(file.FileName, file.OpenReadStream(), usernameStr).Result.Data;
             }).ToList();
         }
@@ -129,9 +137,39 @@ namespace AdsMarketSharing.Controllers
             // 1. Handle IFormFile
             request.Attachments = await CreateFolderAndSaveImage(request.Files);
 
+
+            // 2. Proper the product details
+            var detailImageLst = request.ProductDetails.Select(d => d.Image).Where(image => image != null).ToList();
+            var attachments = await CreateFolderAndSaveImage(detailImageLst);
+            
+            request.ProductDetails = request.ProductDetails.Select((d, index) =>
+            {
+                d.PresentImage = attachments.ElementAtOrDefault(index);
+                return d;
+
+            }).ToList();
+
             // 2. Upload product
             var product = _mapper.Map<Product>(request);
+            var classifyTypes = product.ProductClassifies.Select(pc => pc.ProductClassifyTypes).ToArray();
 
+            // 3. Assign classify detail
+            List<ProductClassfiyDetail> classifyDetail = null;
+            if (classifyTypes != null)
+            {
+                 classifyDetail = request.ProductDetails
+                    .AsQueryable()
+                    .Select(pd => new ProductClassfiyDetail()
+                    {
+                        Price = pd.Price,
+                        Inventory = pd.Inventory,
+                        PresentImage = _mapper.Map<Attachment>(pd.PresentImage),
+                        ClassifyTypeKey = classifyTypes.ElementAtOrDefault(0).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(0)),
+                        ClassifyTypeValue = classifyTypes.ElementAtOrDefault(1) != null ? classifyTypes.ElementAtOrDefault(1).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(1)): null,
+                    })
+                    .ToList();
+            }
+            
             try
             {
                 if (product.ProductCategories is null)
@@ -140,7 +178,11 @@ namespace AdsMarketSharing.Controllers
                 }
 
                 _dbContext.Add(product);
-                await _dbContext.SaveChangesAsync();
+                if(classifyDetail != null)
+                {
+                    _dbContext.AddRange(classifyDetail);
+                }
+                _dbContext.SaveChanges();
                 return StatusCode(201, "created");
             }
             catch (System.Exception e)
@@ -184,7 +226,9 @@ namespace AdsMarketSharing.Controllers
             var product = await _dbContext.Products
                 .Include(p => p.Attachments)
                 .Include(p => p.ProductCategories)
-                .ThenInclude(pc => pc.Category)
+                    .ThenInclude(pc => pc.Category)
+                .Include(p => p.ProductClassifies)
+                    .ThenInclude(pc => pc.ProductClassifyTypes)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product is null) return NotFound("Not found matches");

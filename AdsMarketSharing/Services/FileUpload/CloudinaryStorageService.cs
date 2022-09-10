@@ -47,11 +47,11 @@ namespace AdsMarketSharing.Services.FileUpload
                 {
                     throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.Failed, uploadResult.Error.Message);
                 }
-
+         
                 response.Data = new AttachmentResponseDTO
                 {
                     FilePath = uploadResult.Url.AbsoluteUri,
-                    FileSize= fileStream.Length,
+                    FileSize= uploadResult.Length,
                     FileTag= uploadResult.Format,
                     FileType= uploadResult.ResourceType,
                     Name= uploadResult.PublicId,

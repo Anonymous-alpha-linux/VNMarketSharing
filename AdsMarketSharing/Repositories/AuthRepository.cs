@@ -130,7 +130,7 @@ namespace AdsMarketSharing.Repositories
                         Email = ar.Account.Email,
                         Role = ar.Role.Name
                     })
-                    .First();
+                    .FirstOrDefault();
                 if(foundAccountRole == null)
                 {
                     throw new ServiceResponseException<ResponseStatus>(404,ResponseStatus.Failed,"Your account doesn't currently exist. Please register to use");
