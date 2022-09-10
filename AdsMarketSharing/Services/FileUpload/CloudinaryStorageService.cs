@@ -26,7 +26,7 @@ namespace AdsMarketSharing.Services.FileUpload
             string apiSecret = _configuration.GetSection("AppSettings:CloudinaryURL:ApiSecret").Value;
             _cloudinaryAccount = new Account(cloud,apiKey,apiSecret);
         }
-        public async Task<ServiceResponse<AttachmentResponseDTO>> SaveImage(string newFileName, Stream fileStream, string newFolder)
+        public async Task<ServiceResponse<AttachmentResponseDTO>> SaveImage(string newFileName, Stream fileStream, string folder)
         {
             var cloudinary = new Cloudinary(_cloudinaryAccount);
             var response = new ServiceResponse<AttachmentResponseDTO>();
@@ -38,7 +38,7 @@ namespace AdsMarketSharing.Services.FileUpload
                     UseFilename = true,
                     UniqueFilename = true,
                     Overwrite = true,
-                    Folder = newFolder,
+                    Folder = folder,
 
                 };
                 var uploadResult = await cloudinary.UploadAsync(uploadParams);
@@ -47,11 +47,11 @@ namespace AdsMarketSharing.Services.FileUpload
                 {
                     throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.Failed, uploadResult.Error.Message);
                 }
-
+         
                 response.Data = new AttachmentResponseDTO
                 {
                     FilePath = uploadResult.Url.AbsoluteUri,
-                    FileSize= fileStream.Length,
+                    FileSize= uploadResult.Length,
                     FileTag= uploadResult.Format,
                     FileType= uploadResult.ResourceType,
                     Name= uploadResult.PublicId,
@@ -100,7 +100,12 @@ namespace AdsMarketSharing.Services.FileUpload
             }
             return response;
         }
+        public async Task<ServiceResponse<AttachmentResponseDTO>> CreateFolderAndSaveImage(string fileName, Stream fileStream, string newFolderName)
+        {
+            string newFolder = (await CreateFolder(newFolderName)).Data;
 
+            return await SaveImage(fileName, fileStream, newFolder);
+        }
 
 
 
@@ -154,7 +159,6 @@ namespace AdsMarketSharing.Services.FileUpload
         {
             throw new NotImplementedException();
         }
-
 
     }
 }

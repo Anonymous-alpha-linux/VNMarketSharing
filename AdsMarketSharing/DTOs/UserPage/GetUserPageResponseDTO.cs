@@ -1,4 +1,4 @@
-﻿namespace AdsMarketSharing.DTOs.User
+﻿namespace AdsMarketSharing.DTOs.UserPage
 {
     public class GetUserPageResponseDTO
     {
