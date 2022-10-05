@@ -12,7 +12,7 @@ namespace AdsMarketSharing.Interfaces
         Task<ServiceResponse<AttachmentResponseDTO>> SaveImage(string fileName, Stream fileStream, string folder);
         Task<ServiceResponse<AttachmentResponseDTO>> CreateFolderAndSaveImage(string fileName, Stream fileStream, string newFolderName);
         Task<ServiceResponse<bool>> AddNewFile(IFormFile formFile);
-        Task<ServiceResponse<bool>> DeleteFile(IFormFile formFile);
+        Task<ServiceResponse<bool>> DeleteFile(string id);
         Task<ServiceResponse<bool>> EditFile(IFormFile formFile);
         Task<ServiceResponse<bool>> ReadFile(IFormFile formFile);
         Task<ServiceResponse<bool>> SaveFile(IFormFile formFile);

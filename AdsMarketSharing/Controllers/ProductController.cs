@@ -13,6 +13,8 @@ using AutoMapper.QueryableExtensions;
 using System.Security.Claims;
 using AdsMarketSharing.DTOs.File;
 using Microsoft.AspNetCore.Http;
+using AdsMarketSharing.DTOs;
+using AdsMarketSharing.DTOs.Payment;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -34,6 +36,8 @@ namespace AdsMarketSharing.Controllers
             _fileStorageService = fileStorageService;
         }
 
+        // 1. Product
+        
         [HttpGet("")]
         public async Task<IActionResult> GetProductList([FromQuery]FilterProductRequestDTO filterProductRequestDTO)
         {
@@ -45,7 +49,13 @@ namespace AdsMarketSharing.Controllers
                     .ThenInclude(pc => pc.Category)
                 .Include(p => p.ProductClassifies)
                     .ThenInclude(pc => pc.ProductClassifyTypes)
+                .Include(p => p.Attachments)
                 .AsQueryable();
+
+            int productMax = countfilterProductList(_dbContext.Products, filterProductRequestDTO);
+
+
+            productLstQuery = filterProductList(productLstQuery,filterProductRequestDTO);
 
             var result = await productLstQuery
                 .ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider)
@@ -56,27 +66,34 @@ namespace AdsMarketSharing.Controllers
                 return NotFound("Not found the matches");
             }
 
-            return Ok(result);
+            return Ok(new GetProductListWithCount()
+            {
+                ProductList = result,
+                Amount = productMax
+            });
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProductItem(int id)
         {
-            var product = await _dbContext.Products
+            var product = _dbContext.Products
                 .AsNoTracking()
                 .OrderBy(p => p.Name)
+                .Where(p => p.Id == id)
                 .Include(p => p.UserPage)
                 .Include(p => p.ProductCategories)
                     .ThenInclude(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .Include(p => p.ProductClassifies)
+                    .ThenInclude(pc => pc.ProductClassifyTypes)
+                .Include(p => p.Attachments);
 
             if(product is null)
             {
                 return NotFound("Not Matches");
             }
 
-            var result = _mapper.Map<GetProductResponseDTO>(product);
-            return Ok(result);
+            var result = await product.ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider).ToListAsync();
+            return Ok(result.ElementAtOrDefault(0));
         }
 
         [Authorize]
@@ -105,6 +122,7 @@ namespace AdsMarketSharing.Controllers
                     .ThenInclude(pc => pc.Category)
                 .Include(p => p.ProductClassifies)
                     .ThenInclude(pc => pc.ProductClassifyTypes)
+                .Include(p => p.Attachments)
                 .Where(p => p.UserPageId == userPage.Id)
                 .AsQueryable();
 
@@ -130,6 +148,7 @@ namespace AdsMarketSharing.Controllers
                 return _fileStorageService.CreateFolderAndSaveImage(file.FileName, file.OpenReadStream(), usernameStr).Result.Data;
             }).ToList();
         }
+
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateNewProduct([FromForm]AddProductRequestDTO request)
@@ -190,6 +209,7 @@ namespace AdsMarketSharing.Controllers
                 return StatusCode(500,e.Message);
             }
         }
+        
         [Authorize]
         [HttpPost("uploadFiles")]
         public async Task<ActionResult<List<AttachmentResponseDTO>>> UploadImages(IFormFile[] formFiles)
@@ -238,12 +258,12 @@ namespace AdsMarketSharing.Controllers
                 request.Attachments = await CreateFolderAndSaveImage(request.Files);
                 product = _mapper.Map(request, product);
 
-               //_dbContext.Update(newProduct);
+                _dbContext.Update(product);
                 await _dbContext.SaveChangesAsync();
                 return Ok("Updated");
             }
             catch (System.Exception e)
-            {
+            {   
                 return StatusCode(500, "Server Exception");
             }
         }
@@ -406,6 +426,43 @@ namespace AdsMarketSharing.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        private IQueryable<Product> filterProductList(IQueryable<Product> productLstQuery,FilterProductRequestDTO filterProductRequestDTO)
+        {
+            if (filterProductRequestDTO.CategoryId != null)
+            {
+                productLstQuery = productLstQuery
+                    .Where(product => product.ProductCategories.Any(pc => pc.CategoryId == filterProductRequestDTO.CategoryId))
+                    .AsQueryable();
+            }
+
+            if (filterProductRequestDTO.Page != null || filterProductRequestDTO.Take != null)
+            {
+                productLstQuery = productLstQuery.Skip((filterProductRequestDTO.Page - 1) * filterProductRequestDTO.Take).Take(filterProductRequestDTO.Take).AsQueryable();
+            }
+
+            if(filterProductRequestDTO.MinPrice != null && filterProductRequestDTO.MaxPrice != null)
+            {
+                productLstQuery = productLstQuery.Where(p => p.Price >= filterProductRequestDTO.MinPrice && p.Price <= filterProductRequestDTO.MaxPrice).AsQueryable();
+            }
+            
+            return productLstQuery;
+        }
+        private int countfilterProductList(IQueryable<Product> productLstQuery, FilterProductRequestDTO filterProductRequestDTO) {
+            if (filterProductRequestDTO.CategoryId != null)
+            {
+                productLstQuery = productLstQuery
+                    .Where(product => product.ProductCategories.Any(pc => pc.CategoryId == filterProductRequestDTO.CategoryId))
+                    .AsQueryable();
+            }
+
+            if (filterProductRequestDTO.MinPrice != null && filterProductRequestDTO.MaxPrice != null)
+            {
+                productLstQuery = productLstQuery.Where(p => p.Price >= filterProductRequestDTO.MinPrice && p.Price <= filterProductRequestDTO.MaxPrice).AsQueryable();
+            }
+
+            return productLstQuery.Count();
         }
     }
 

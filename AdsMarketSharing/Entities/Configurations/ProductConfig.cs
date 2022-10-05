@@ -8,6 +8,8 @@ namespace AdsMarketSharing.Entities.Configurations
         public void Configure(EntityTypeBuilder<Product> builder)
         {
             builder.Property(p => p.Price).HasColumnType("decimal(9,2)").IsRequired();
+
+            //builder.Property(p => p.SoldQuantity).HasComputedColumnSql("SUM(orders)");
         }
     }
 }

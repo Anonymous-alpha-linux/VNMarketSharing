@@ -1,5 +1,6 @@
 ﻿using AdsMarketSharing.Enum;
 using System.ComponentModel.DataAnnotations;
+using AdsMarketSharing.DTOs.User;
 
 namespace AdsMarketSharing.DTOs.Account
 {

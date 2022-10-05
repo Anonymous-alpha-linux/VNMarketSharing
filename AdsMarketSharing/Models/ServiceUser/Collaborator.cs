@@ -14,7 +14,7 @@ namespace AdsMarketSharing.Models.ServiceUser
         public int Port { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LeaveAt { get; set; }
-        public List<Payment> Payments { get; set; }
+        //public List<Payment> Payments { get; set; }
         public string Token { get; set; }
         public CollaboratorStatus CurrentStatus { get; set; }
     }

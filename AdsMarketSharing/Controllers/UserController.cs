@@ -44,7 +44,8 @@ namespace AdsMarketSharing.Controllers
                 var user = await _context.Accounts.Include(acc => acc.User)
                     .ThenInclude(user => user.Avatar)
                     .Where(account => account.Id == accountId)
-                    .Select(acc => new { 
+                    .Select(acc => new
+                    {
                         UserId = acc.User.Id,
                         Username = !string.IsNullOrEmpty(acc.User.OrganizationName) ? acc.User.OrganizationName : acc.Email,
                         Avatar = acc.User.Avatar.PublicPath
@@ -122,23 +123,24 @@ namespace AdsMarketSharing.Controllers
         [HttpPut("updateInfo")]
         public async Task<IActionResult> UpdateInfo(GenerateUserRequestDTO request)
         {
+            // 1. Get Authorized Id
             string nameIdentifierStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
-            var userRecords = (await _unitOfWork.UserRepository.Find(user => user.AccountId.ToString() == nameIdentifierStr)).ToList();
-            var userRecord = new Entities.User();
-            if(userRecords.Count != 0)
-            {
-                userRecord = userRecords.First();
-            }
-            userRecord = _mapper.Map(request,userRecord);          
-            var response = await _unitOfWork.UserRepository.Upsert(userRecord);
-            if(response == null)
-            {
-                return NotFound("Update user info failed");
-            }
-            await _unitOfWork.CompleteAsync();
+            int.TryParse(nameIdentifierStr, out int accountId);
+
+            // 2. Found exist user or non-existing user
+            var foundUser = _context.Users.FirstOrDefault(u => u.AccountId == accountId);
+
+            var userEntity = new Entities.User();
+
+            userEntity = _mapper.Map(request,foundUser);        
+            userEntity.AccountId = accountId;
+
+            _context.Update(userEntity);
+            _context.SaveChanges();
+
             return Ok(new
             {
-                OrganizationName = response.OrganizationName,
+                OrganizationName = userEntity.OrganizationName,
                 Message = "Updated successfully"
             });
         }
@@ -202,6 +204,39 @@ namespace AdsMarketSharing.Controllers
                 }
                 await _unitOfWork.CompleteAsync();
                 return Ok(newAddress);
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+        [HttpPut("setdefault")]
+        public async Task<IActionResult> UpdateAddressDefault(int addressId, int userId, int type)
+        {
+            try
+            {
+                if(addressId != null && userId != null && type != null)
+                {
+                    var foundAddressLst = _context.ReceiverAddresses
+                        .Where(p => p.UserId == userId && p.AddressType == type).ToList();
+
+                     foundAddressLst = foundAddressLst.Select(p => {
+                            if (p.Id == addressId)
+                            {
+                                p.IsDefault = true;
+                            }
+                            else
+                            {
+                                p.IsDefault = false;
+                            }
+                            return p;
+                        }).ToList();
+
+                    _context.ReceiverAddresses.UpdateRange(foundAddressLst);
+                    _context.SaveChanges();
+                    return Ok("Set default success");
+                }
+                return BadRequest("Your request must have three params: addressId, userId, type");
             }
             catch (System.Exception e)
             {

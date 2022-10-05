@@ -8,5 +8,6 @@
         public string ProductClassifyValue { get; set; }
         public decimal Price { get; set; }
         public int Inventory { get; set; }
+        public string PresentImage { get; set; }
     }
 }

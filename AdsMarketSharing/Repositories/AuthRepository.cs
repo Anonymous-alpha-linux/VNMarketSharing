@@ -73,8 +73,13 @@ namespace AdsMarketSharing.Repositories
                 newAccount.PasswordHash = passwordHash;
                 newAccount.PasswordSalt = passwordSalt;
 
+                // 3.1. Create User Profile also
+                User newUser = new User();
+                newUser.Account = newAccount;
+
                 // 4. Add the new account to db
                 await _context.Accounts.AddAsync(newAccount);
+                _context.Users.Add(newUser);
 
                 // 5. Save the current markup   
                 await _context.SaveChangesAsync();

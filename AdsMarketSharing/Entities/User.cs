@@ -15,8 +15,11 @@ namespace AdsMarketSharing.Entities
         public Attachment Avatar { get; set; }
         public int AccountId { get; set; }
         public Account Account { get; set; }
-        public List<ReceiverAddress> ReceiverAddress { get;set; }
         public UserPage Page { get; set; }
+        public List<ReceiverAddress> ReceiverAddress { get;set; }
+        public List<Order> Orders { get; set; }
+        public List<Invoice> Invoices { get; set; }
+        public List<Payment> Payments { get; set; }
 
     }
 }
