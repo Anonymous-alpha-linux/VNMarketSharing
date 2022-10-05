@@ -83,6 +83,8 @@
     <Compile Remove="Migrations\20221004111203_add foreign key userid to invoice table.Designer.cs" />
     <Compile Remove="Migrations\20221004113143_add foreign key userid to invoice table.cs" />
     <Compile Remove="Migrations\20221004113143_add foreign key userid to invoice table.Designer.cs" />
+    <Compile Remove="Migrations\20221005151952_create review table.cs" />
+    <Compile Remove="Migrations\20221005151952_create review table.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

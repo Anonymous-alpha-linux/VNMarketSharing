@@ -15,6 +15,7 @@ using AdsMarketSharing.DTOs.File;
 using Microsoft.AspNetCore.Http;
 using AdsMarketSharing.DTOs;
 using AdsMarketSharing.DTOs.Payment;
+using AdsMarketSharing.DTOs.Review;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -464,7 +465,28 @@ namespace AdsMarketSharing.Controllers
 
             return productLstQuery.Count();
         }
-    }
 
+        // 3. Review Product
+        [HttpPost("review")]
+        public async Task<IActionResult> ReviewProduct(ReviewProductCreationDTO request)
+        {
+            try
+            {
+                var foundReviewFromUser = _dbContext.Reviews.FirstOrDefault(p => p.UserId == request.UserId && p.ProductId == request.ProductId);
+
+                var updatedReview = _mapper.Map(request, foundReviewFromUser);
+
+                _dbContext.Reviews.Update(updatedReview);
+                _dbContext.SaveChanges();
+
+                return Ok("Posted success");
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+    }
 
 }

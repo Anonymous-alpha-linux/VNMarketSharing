@@ -20,6 +20,7 @@ namespace AdsMarketSharing.Entities
         public List<Order> Orders { get; set; }
         public List<Invoice> Invoices { get; set; }
         public List<Payment> Payments { get; set; }
+        public List<Review> Reviews { get; set; }
 
     }
 }

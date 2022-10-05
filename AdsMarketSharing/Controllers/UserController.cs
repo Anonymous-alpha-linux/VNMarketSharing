@@ -270,5 +270,6 @@ namespace AdsMarketSharing.Controllers
                 return StatusCode(500, e.Message);
             }
         }
+
     }
 }
