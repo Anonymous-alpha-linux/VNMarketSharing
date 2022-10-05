@@ -6,6 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Models\Auth\**" />
+    <Content Remove="Models\Auth\**" />
+    <EmbeddedResource Remove="Models\Auth\**" />
+    <None Remove="Models\Auth\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.cs" />
     <Compile Remove="Migrations\20220715134023_AddUserAndAttachmentModel.Designer.cs" />
     <Compile Remove="Migrations\20220801043912_AddCategoryModel.cs" />
@@ -44,6 +51,38 @@
     <Compile Remove="Migrations\20220907131808_Set nullable property of ProductClassifyDetail.Designer.cs" />
     <Compile Remove="Migrations\20220907132204_Modify primary key Id from ProductClassifyDetail.cs" />
     <Compile Remove="Migrations\20220907132204_Modify primary key Id from ProductClassifyDetail.Designer.cs" />
+    <Compile Remove="Migrations\20220928104023_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928104023_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928104153_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928104153_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928104529_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928104529_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928104734_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928104734_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928105425_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928105425_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928114547_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928114547_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928115601_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928115601_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928120712_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928120712_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928121234_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928121234_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928141045_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928141045_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928142049_add payment, invoice and order table.cs" />
+    <Compile Remove="Migrations\20220928142049_add payment, invoice and order table.Designer.cs" />
+    <Compile Remove="Migrations\20220928163113_Add calcSoldQuantity functions.cs" />
+    <Compile Remove="Migrations\20220928163113_Add calcSoldQuantity functions.Designer.cs" />
+    <Compile Remove="Migrations\20221003173815_add onlineRef property to invoice table.cs" />
+    <Compile Remove="Migrations\20221003173815_add onlineRef property to invoice table.Designer.cs" />
+    <Compile Remove="Migrations\20221004110839_add foreign key userid to invoice table.cs" />
+    <Compile Remove="Migrations\20221004110839_add foreign key userid to invoice table.Designer.cs" />
+    <Compile Remove="Migrations\20221004111203_add foreign key userid to invoice table.cs" />
+    <Compile Remove="Migrations\20221004111203_add foreign key userid to invoice table.Designer.cs" />
+    <Compile Remove="Migrations\20221004113143_add foreign key userid to invoice table.cs" />
+    <Compile Remove="Migrations\20221004113143_add foreign key userid to invoice table.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,6 +105,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.19.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Sek.Module.Payment.VnPay.AspNetCore" Version="1.0.0" />
+    <PackageReference Include="Sek.Module.Payment.VnPay.Core" Version="1.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="7.0.3" />
   </ItemGroup>
@@ -73,7 +115,6 @@
   <ItemGroup>
     <Folder Include="DTOs\Ads\" />
     <Folder Include="DTOs\Collaborator\" />
-    <Folder Include="Models\Auth\" />
     <Folder Include="Services\Ads\" />
     <Folder Include="Services\Notification\" />
   </ItemGroup>

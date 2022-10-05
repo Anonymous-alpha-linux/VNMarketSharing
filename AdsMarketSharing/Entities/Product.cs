@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace AdsMarketSharing.Entities
 {
@@ -14,7 +15,17 @@ namespace AdsMarketSharing.Entities
         public int Inventory { get; set; }
         public bool InPages { get; set; }
         public string Description { get; set; }
-        public int SoldQuantity { get; set; }
+        private int _soldQuantity;
+        public int SoldQuantity { 
+            get
+            {
+                return _soldQuantity;
+            }
+            set
+            {
+                _soldQuantity = this.Orders.Sum(s => s.Amount);
+            }
+        }
         public bool HasAccepted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -24,5 +35,6 @@ namespace AdsMarketSharing.Entities
         public List<ProductCategory> ProductCategories { get; set; }
         public List<Attachment> Attachments { get; set; }
         public List<ProductClassify> ProductClassifies { get; set; }
+        public List<Order> Orders { get; set; }
     }
 }

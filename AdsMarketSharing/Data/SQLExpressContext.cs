@@ -1,4 +1,5 @@
 ﻿using AdsMarketSharing.Entities;
+using AdsMarketSharing.Entities.Functions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -40,6 +41,8 @@ namespace AdsMarketSharing.Data
             modelBuilder.Entity<AccountRole>().HasKey(accountRole => new { accountRole.AccountId ,accountRole.RoleId });
             
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            //Scalars.RegisterFunction(modelBuilder);   
         }
 
 
@@ -57,6 +60,8 @@ namespace AdsMarketSharing.Data
         public DbSet<ProductClassify> ProductClassifies { get; set; }
         public DbSet<ProductClassifyType> ProductClassifyTypes { get; set; }
         public DbSet<ProductClassfiyDetail> ProductClassfiyDetails { get; set; }
-
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<Payment> Payments { get; set; }
     }
 }

@@ -13,9 +13,7 @@ namespace AdsMarketSharing.DTOs.Product
         public bool InPages { get; set; }
         public string Description { get; set; }
         public int SoldQuantity { get; set; }
-        public int UserPageId { get; set; }
-        public string UserPageName { get; set; }
-        public string UserPageAvatar { get; set; }
+        public GetUserPageResponseDTO UserPage { get; set; }
         public bool HasAccepted { get; set; } = false;
         public DateTime CreatedAt { get; set; }
         public List<GetCategoryResponseDTO> ProductCategories { get; set; }

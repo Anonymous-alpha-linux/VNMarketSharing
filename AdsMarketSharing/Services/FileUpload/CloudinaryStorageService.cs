@@ -143,9 +143,34 @@ namespace AdsMarketSharing.Services.FileUpload
             }
             return response;
         }
-        public Task<ServiceResponse<bool>> DeleteFile(IFormFile formFile)
+        public async Task<ServiceResponse<bool>> DeleteFile(string publicId)
         {
-            throw new System.NotImplementedException();
+            var cloudinary = new Cloudinary(_cloudinaryAccount);
+            var response = new ServiceResponse<bool>();
+
+            try
+            {
+                var clodinaryResult = cloudinary.Destroy(new DeletionParams(publicId));
+
+                if (clodinaryResult.Error != null)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.Failed, clodinaryResult.Error.Message);
+                }
+                response.Data = true;
+                response.Message = "Deleted file";
+                response.ServerMessage = "Completed service";
+                response.Status = ResponseStatus.Successed;
+                response.StatusCode = 200;
+            }
+            catch (ServiceResponseException<ResponseStatus> exception)
+            {
+                response.Data = false;
+                response.Message = "Delete failed";
+                response.ServerMessage = exception.Message;
+                response.Status = exception.Value;
+                response.StatusCode = exception.StatusCode;
+            }
+            return response;
         }
         public Task<ServiceResponse<bool>> EditFile(IFormFile formFile)
         {

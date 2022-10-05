@@ -20,6 +20,9 @@ using AdsMarketSharing.Services.Email;
 using AdsMarketSharing.Models.Email;
 using Swashbuckle.AspNetCore.Filters;
 using AdsMarketSharing.Hubs;
+using AdsMarketSharing.Models.Payment;
+using AdsMarketSharing.Services.Payment;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace AdsMarketSharing
 {
@@ -42,6 +45,7 @@ namespace AdsMarketSharing
             {
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             });
+            //services.AddControllersWithViews();
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddCors(options =>
             {
@@ -98,7 +102,7 @@ namespace AdsMarketSharing
                 };
             });
             services.AddSignalR();
-
+            services.AddHttpContextAccessor();
             // Singleton Service
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IFileStorageService, CloudinaryStorageService>();
@@ -109,6 +113,8 @@ namespace AdsMarketSharing
             services.AddScoped<IToken, TokenRepository>();                
             services.AddScoped<IMailService, MailService>()
                 .Configure<EmailConfiguration>(Configuration.GetSection("AppSettings:EmailSettings"));
+            services.AddScoped<IPaymentService, VNPayPaymentService>()
+                .Configure<VNPayPaymentConfiguration>(Configuration.GetSection("AppSettings:VNPay"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -117,8 +123,8 @@ namespace AdsMarketSharing
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseForwardedHeaders(new ForwardedHeadersOptions() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All });
             }
-
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -126,15 +132,22 @@ namespace AdsMarketSharing
                 c.RoutePrefix = String.Empty;
             });
 
+            app.UseForwardedHeaders(new ForwardedHeadersOptions() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All });
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthentication();
             app.UseCors("AllowAPIRequestIO");
             app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                //endpoints.MapControllerRoute(
+                //        name: "Payment_default",
+                //        pattern: "Payment/{controller}/{action}/{id?}",
+                //        defaults: new { controller = "VNPayment", action = "Index", id = UrlParameter.Optional });
                 endpoints.MapHub<ChatHub>("/chat");
+                endpoints.MapHub<NotifyHub>("/notify");
             });
         }
     }

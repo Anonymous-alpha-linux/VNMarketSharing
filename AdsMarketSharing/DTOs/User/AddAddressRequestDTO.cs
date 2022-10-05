@@ -10,7 +10,9 @@ namespace AdsMarketSharing.DTOs.User
         [Required]
         public string StreetAddress { get; set; }
         [Required]
-        public string Province { get; set; }
+        public string District { get; set; }
+        [Required]
+        public string Ward { get; set; }
         [Required]
         public string City { get; set; }
         [Required]
