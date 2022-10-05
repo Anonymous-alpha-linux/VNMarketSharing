@@ -36,5 +36,6 @@ namespace AdsMarketSharing.Entities
         public List<Attachment> Attachments { get; set; }
         public List<ProductClassify> ProductClassifies { get; set; }
         public List<Order> Orders { get; set; }
+        public List<Review> Reviews { get; set; }
     }
 }

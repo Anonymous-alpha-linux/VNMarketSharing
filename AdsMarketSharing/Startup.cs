@@ -148,6 +148,7 @@ namespace AdsMarketSharing
                 //        defaults: new { controller = "VNPayment", action = "Index", id = UrlParameter.Optional });
                 endpoints.MapHub<ChatHub>("/chat");
                 endpoints.MapHub<NotifyHub>("/notify");
+                endpoints.MapHub<ReviewHub>("/review");
             });
         }
     }

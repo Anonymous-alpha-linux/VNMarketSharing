@@ -7,6 +7,7 @@ using AdsMarketSharing.DTOs.UserPage;
 using AdsMarketSharing.DTOs.Product;
 using System.Linq;
 using AdsMarketSharing.DTOs.Payment;
+using AdsMarketSharing.DTOs.Review;
 
 namespace AdsMarketSharing
 {
@@ -123,6 +124,11 @@ namespace AdsMarketSharing
                 .ForMember(dto => dto.Merchant, ent => ent.MapFrom(p => p.Merchant.Name))
                 .ForMember(dto => dto.Address, ent => ent.MapFrom(p => $"{p.BuyerFullName} - {p.Address.StreetAddress} - {p.Address.Ward} - {p.Address.District} - {p.Address.City}"))
                 .ForMember(dto => dto.InvoiceRef, ent => ent.MapFrom(p => p.Invoice.OnlineRef));
+
+
+            // Review
+            CreateMap<ReviewProductCreationDTO, Review>();
+            CreateMap<Review, ReviewProductResponseDTO>();
         }
     }
 }
