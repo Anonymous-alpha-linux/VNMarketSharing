@@ -82,6 +82,7 @@ namespace AdsMarketSharing.Controllers
                 .OrderBy(p => p.Name)
                 .Where(p => p.Id == id)
                 .Include(p => p.UserPage)
+                    .ThenInclude(p => p.PageAvatar)
                 .Include(p => p.ProductCategories)
                     .ThenInclude(p => p.Category)
                 .Include(p => p.ProductClassifies)
@@ -292,7 +293,7 @@ namespace AdsMarketSharing.Controllers
                 var categories = _dbContext.Categories
                                 .Where(c => c.Level == request.Level)
                                 .AsQueryable();
-
+                
                 if (request.ParentId != null)
                 {
                     categories = categories.Where(c => c.ParentCategoryId == request.ParentId);
@@ -466,9 +467,45 @@ namespace AdsMarketSharing.Controllers
             return productLstQuery.Count();
         }
 
+
         // 3. Review Product
+        [HttpGet("review/list")]
+        public async Task<IActionResult> GetReviewProduct(int productId)
+        {
+            try
+            {
+                var foundReviewFromUser = _dbContext.Reviews.AsNoTracking()
+                                                            .Include(p => p.User)
+                                                            .Include(p => p.Replies)
+                                                                .ThenInclude(p => p.UserPage)
+                                                            .Where(p => p.ProductId == productId)
+                                                            .AsQueryable();
+
+
+                try
+                {
+                    var result = foundReviewFromUser.ProjectTo<ReviewProductResponseDTO>(_mapper.ConfigurationProvider).ToList();
+                    //var result = _mapper.Map<ReviewProductResponseDTO>(foundReviewFromUser);
+                    return Ok(new
+                    {
+                        Message = "Get success",
+                        Result = result
+                    });
+                }
+                catch (System.Exception e)
+                {
+                    return StatusCode(500, e.Message);
+                }
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [Authorize]
         [HttpPost("review")]
-        public async Task<IActionResult> ReviewProduct(ReviewProductCreationDTO request)
+        public async Task<IActionResult> CreateReviewProduct(ReviewProductCreationDTO request)
         {
             try
             {
@@ -477,9 +514,64 @@ namespace AdsMarketSharing.Controllers
                 var updatedReview = _mapper.Map(request, foundReviewFromUser);
 
                 _dbContext.Reviews.Update(updatedReview);
+
                 _dbContext.SaveChanges();
 
-                return Ok("Posted success");
+                return Ok(new
+                {
+                    Message = "Posted success",
+                    Result = _mapper.Map<ReviewProductResponseDTO>(updatedReview)
+                });
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [HttpGet("review/replies")]
+        public async Task<IActionResult> GetReplyListFromReviewProduct(int reviewId)
+        {
+            try
+            {
+                var foundReviewFromUser = _dbContext.Replies.Where(p => p.ReviewId == reviewId);
+
+                return Ok(new
+                {
+                    Message = "Get success",
+                    Result = foundReviewFromUser.ProjectTo<ReplyReviewResponseDTO>(_mapper.ConfigurationProvider)
+                });
+            }
+            catch (System.Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpPost("review/reply")]  
+        public async Task<IActionResult> CreateReplyReviewProduct(ReplyReviewCreationDTO request)
+        {
+            try
+            {
+                var foundReplyReviewFromUser = _dbContext.Reviews.FirstOrDefault(p => p.Id == request.ReviewId);
+
+                if (foundReplyReviewFromUser is null)
+                {
+                    return BadRequest("Entity of this review doesn't exist");
+                }
+
+                var newReplyReview = _mapper.Map<Reply>(request);
+
+                _dbContext.Replies.Add(newReplyReview);
+
+                _dbContext.SaveChanges();
+
+                return Ok(new
+                {
+                    Message = "Posted success",
+                    Result = _mapper.Map<ReplyReviewResponseDTO>(newReplyReview)
+                });
             }
             catch (System.Exception e)
             {

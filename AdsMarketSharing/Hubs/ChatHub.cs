@@ -10,6 +10,7 @@ namespace AdsMarketSharing.Hubs
         {
             return Clients.All.SendAsync("broadcastMessage", "i'm chathub","hello world");
         }
+        [Authorize]
         [HubMethodName("sendMessageToAll")]
         public Task SendMessageToAll(string name, string message) {
             return Clients.All.SendAsync("broadcastMessage", name, message);

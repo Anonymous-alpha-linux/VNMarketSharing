@@ -64,5 +64,6 @@ namespace AdsMarketSharing.Data
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Reply> Replies { get; set; }
     }
 }

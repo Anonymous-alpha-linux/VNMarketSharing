@@ -11,5 +11,6 @@ namespace AdsMarketSharing.Entities
         public string FileType { get; set; }
         public string FileTag { get; set; }
         public float FileSize { get; set; }
+        public User User { get; set; }
     }
 }

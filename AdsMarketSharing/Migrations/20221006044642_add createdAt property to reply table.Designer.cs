@@ -4,14 +4,16 @@ using AdsMarketSharing.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AdsMarketSharing.Migrations
 {
     [DbContext(typeof(SQLExpressContext))]
-    partial class SQLExpressContextModelSnapshot : ModelSnapshot
+    [Migration("20221006044642_add createdAt property to reply table")]
+    partial class addcreatedAtpropertytoreplytable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -508,14 +510,9 @@ namespace AdsMarketSharing.Migrations
                     b.Property<int?>("ReviewId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UserPageId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ReviewId");
-
-                    b.HasIndex("UserPageId");
 
                     b.ToTable("Replies");
                 });
@@ -604,7 +601,7 @@ namespace AdsMarketSharing.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("AttachmentId")
+                    b.Property<int>("AttachmentId")
                         .HasColumnType("int");
 
                     b.Property<string>("Biography")
@@ -621,9 +618,7 @@ namespace AdsMarketSharing.Migrations
                     b.HasIndex("AccountId")
                         .IsUnique();
 
-                    b.HasIndex("AttachmentId")
-                        .IsUnique()
-                        .HasFilter("[AttachmentId] IS NOT NULL");
+                    b.HasIndex("AttachmentId");
 
                     b.ToTable("Users");
                 });
@@ -839,11 +834,6 @@ namespace AdsMarketSharing.Migrations
                     b.HasOne("AdsMarketSharing.Entities.Review", "ReplyFrom")
                         .WithMany("Replies")
                         .HasForeignKey("ReviewId");
-
-                    b.HasOne("AdsMarketSharing.Entities.UserPage", "UserPage")
-                        .WithMany("Replies")
-                        .HasForeignKey("UserPageId")
-                        .OnDelete(DeleteBehavior.NoAction);
                 });
 
             modelBuilder.Entity("AdsMarketSharing.Entities.Review", b =>
@@ -870,9 +860,10 @@ namespace AdsMarketSharing.Migrations
                         .IsRequired();
 
                     b.HasOne("AdsMarketSharing.Entities.Attachment", "Avatar")
-                        .WithOne("User")
-                        .HasForeignKey("AdsMarketSharing.Entities.User", "AttachmentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .WithMany()
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AdsMarketSharing.Entities.UserPage", b =>

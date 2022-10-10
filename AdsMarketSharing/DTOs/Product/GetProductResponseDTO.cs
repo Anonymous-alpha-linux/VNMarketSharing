@@ -20,5 +20,6 @@ namespace AdsMarketSharing.DTOs.Product
         public List<GetProductClassifyResponseDTO> ProductClassifies { get; set; }
         public List<GetProductClassifyDetailResponseDTO> ProductDetails { get; set; }
         public List<string> Urls { get; set; }
+        public int ReviewAmount { get; set; } = 0;
     }
 }

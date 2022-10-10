@@ -8,10 +8,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Http;
-
+using Microsoft.AspNetCore.HttpOverrides;
 using System;
 using System.Text;
-
 using AdsMarketSharing.Data;
 using AdsMarketSharing.Interfaces;
 using AdsMarketSharing.Repositories;
@@ -22,7 +21,10 @@ using Swashbuckle.AspNetCore.Filters;
 using AdsMarketSharing.Hubs;
 using AdsMarketSharing.Models.Payment;
 using AdsMarketSharing.Services.Payment;
-using Microsoft.AspNetCore.HttpOverrides;
+using AdsMarketSharing.Entities;
+
+using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
 
 namespace AdsMarketSharing
 {
@@ -40,12 +42,19 @@ namespace AdsMarketSharing
         {
             services.AddOptions();
             services.AddDbContext<SQLExpressContext>(x => x.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-            /*  services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<SQLExpressContext>();*/
+
+            //services.AddIdentity().AddEntityFrameworkStores<SQLExpressContext>();
             services.AddControllers().AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             });
+            services.AddSignalR(hubOptions =>
+            {
+                hubOptions.EnableDetailedErrors = true;
+                hubOptions.KeepAliveInterval = TimeSpan.FromMinutes(1);
+            });
             //services.AddControllersWithViews();
+
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddCors(options =>
             {
@@ -82,26 +91,46 @@ namespace AdsMarketSharing
             });
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
-            {
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    // Specify the key used to sign the token:
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
-                    // Clock skew compensates for server time drift.
-                    // We recommend 5 minutes or less:
-                    ClockSkew = TimeSpan.Zero,
-                    // Ensure the token hasn't expired:
-                    RequireExpirationTime = true,
-                    ValidateLifetime = true,
-                    // Ensure the token audience matches our audience value (default true):
-                    ValidateAudience = false,
-                    ValidateIssuer = false,
-                    RequireSignedTokens = true
-                };
-            });
-            services.AddSignalR();
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        // Specify the key used to sign the token:
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("AppSettings:Token").Value)),
+                        // Clock skew compensates for server time drift.
+                        // We recommend 5 minutes or less:
+                        ClockSkew = TimeSpan.Zero,
+                        // Ensure the token hasn't expired:
+                        RequireExpirationTime = true,
+                        ValidateLifetime = true,
+                        // Ensure the token audience matches our audience value (default true):
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        RequireSignedTokens = true
+                    };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+
+                            // If the request is for our hub...
+                            var path = context.HttpContext.Request.Path;
+                            bool isHub = !string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/hubs"));
+                            if (isHub)
+                            {
+                                // Read the token out of the query string
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        },
+                        OnTokenValidated = context =>
+                        { 
+                            return Task.CompletedTask;   
+                        }
+                    };
+                });       
             services.AddHttpContextAccessor();
             // Singleton Service
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -146,9 +175,9 @@ namespace AdsMarketSharing
                 //        name: "Payment_default",
                 //        pattern: "Payment/{controller}/{action}/{id?}",
                 //        defaults: new { controller = "VNPayment", action = "Index", id = UrlParameter.Optional });
-                endpoints.MapHub<ChatHub>("/chat");
-                endpoints.MapHub<NotifyHub>("/notify");
-                endpoints.MapHub<ReviewHub>("/review");
+                endpoints.MapHub<ChatHub>("/hubs/chat");
+                endpoints.MapHub<NotifyHub>("/hubs/notify");
+                endpoints.MapHub<ReviewHub>("/hubs/review");
             });
         }
     }

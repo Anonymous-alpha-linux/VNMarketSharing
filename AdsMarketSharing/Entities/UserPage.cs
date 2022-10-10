@@ -16,5 +16,6 @@ namespace AdsMarketSharing.Entities
         public User User { get; set; }
         public List<Product> Products { get; set; }
         public List<Order> Orders { get; set; }
+        public List<Reply> Replies { get; set; }
     }
 }
