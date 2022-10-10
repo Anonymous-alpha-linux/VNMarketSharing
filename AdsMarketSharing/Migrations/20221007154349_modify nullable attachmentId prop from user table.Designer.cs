@@ -4,14 +4,16 @@ using AdsMarketSharing.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AdsMarketSharing.Migrations
 {
     [DbContext(typeof(SQLExpressContext))]
-    partial class SQLExpressContextModelSnapshot : ModelSnapshot
+    [Migration("20221007154349_modify nullable attachmentId prop from user table")]
+    partial class modifynullableattachmentIdpropfromusertable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -508,12 +510,17 @@ namespace AdsMarketSharing.Migrations
                     b.Property<int?>("ReviewId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UserPageId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ReviewId");
+
+                    b.HasIndex("UserId");
 
                     b.HasIndex("UserPageId");
 
@@ -839,6 +846,11 @@ namespace AdsMarketSharing.Migrations
                     b.HasOne("AdsMarketSharing.Entities.Review", "ReplyFrom")
                         .WithMany("Replies")
                         .HasForeignKey("ReviewId");
+
+                    b.HasOne("AdsMarketSharing.Entities.User", "User")
+                        .WithMany("Replies")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("AdsMarketSharing.Entities.UserPage", "UserPage")
                         .WithMany("Replies")

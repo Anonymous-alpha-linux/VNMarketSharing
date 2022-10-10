@@ -7,11 +7,13 @@ using AdsMarketSharing.DTOs.UserPage;
 using AdsMarketSharing.DTOs.Product;
 using System.Linq;
 using AdsMarketSharing.DTOs.Payment;
+using AdsMarketSharing.DTOs.Review;
 
 namespace AdsMarketSharing
 {
     public class AutoMapperProfile: Profile
     {
+        private const string defaultAvatar = "https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg";
         public AutoMapperProfile()
         {
             // Account 
@@ -26,6 +28,13 @@ namespace AdsMarketSharing
             CreateMap<GenerateUserRequestDTO, User>()
                 .ForMember(ent => ent.OrganizationName, dto => dto.MapFrom(u => u.OrganizationName))
                 .ForMember(ent => ent.Biography, dto => dto.MapFrom(u => u.Biography));
+            CreateMap<User, GetUserResponseDTO>()
+                .ForMember(dto => dto.Avatar, ent => ent.MapFrom(p => p.AttachmentId != 0 ? p.Avatar.PublicPath : defaultAvatar));
+            CreateMap<User, GetUserWithoutBiographyDTO>()
+                .ForMember(dto => dto.Avatar, ent => { 
+                    ent.AllowNull();
+                    ent.MapFrom(p => p.AttachmentId > 0 ? p.Avatar.PublicPath : defaultAvatar);
+                });
 
             // Address
             CreateMap<AddAddressRequestDTO, ReceiverAddress>();
@@ -61,7 +70,8 @@ namespace AdsMarketSharing
                     .SelectMany(pc => pc.ProductClassifyTypes
                         .Where(type => type.ProductClassifyValues.Count != 0)
                             .SelectMany(type => type.ProductClassifyValues)
-                )));
+                )))
+                .ForMember(dto => dto.ReviewAmount, ent => ent.MapFrom(p => p.Reviews.Count));
 
             // Classify
             CreateMap<AddProductClassifyRequestDTO, ProductClassify>()
@@ -100,9 +110,12 @@ namespace AdsMarketSharing
                 
             // UserPage
             CreateMap<UserPage, GetUserPageResponseDTO>()
-                .ForMember(dto => dto.BannerUrl, ent => ent.MapFrom(up => up.BannerUrl.PublicPath))
-                .ForMember(dto => dto.PageAvatar, ent => ent.MapFrom(up => up.PageAvatar.PublicPath));
+                .ForMember(dto => dto.BannerUrl, ent => ent.MapFrom(up => up.BannerUrl != null ? up.BannerUrl.PublicPath: defaultAvatar))
+                .ForMember(dto => dto.PageAvatar, ent => ent.MapFrom(up => up.PageAvatar != null ? up.PageAvatar.PublicPath: defaultAvatar));
             CreateMap<UserPageCreationDTO, UserPage>();
+            CreateMap<UserPage, GetUserPageWithoutDescriptionDTO>()
+                .ForMember(dto => dto.BannerUrl, ent => ent.MapFrom(up => up.BannerUrl != null ? up.BannerUrl.PublicPath : defaultAvatar))
+                .ForMember(dto => dto.PageAvatar, ent => ent.MapFrom(up => up.PageAvatar != null ? up.PageAvatar.PublicPath : defaultAvatar));
 
 
             // Payment
@@ -123,6 +136,16 @@ namespace AdsMarketSharing
                 .ForMember(dto => dto.Merchant, ent => ent.MapFrom(p => p.Merchant.Name))
                 .ForMember(dto => dto.Address, ent => ent.MapFrom(p => $"{p.BuyerFullName} - {p.Address.StreetAddress} - {p.Address.Ward} - {p.Address.District} - {p.Address.City}"))
                 .ForMember(dto => dto.InvoiceRef, ent => ent.MapFrom(p => p.Invoice.OnlineRef));
+
+
+            // Review
+            CreateMap<ReviewProductCreationDTO, Review>();
+            CreateMap<Review, ReviewProductResponseDTO>()
+                .ForMember(dto => dto.ReplyAmount, ent => ent.MapFrom(p => p.Replies != null ? p.Replies.Count : 0));
+
+            //Reply
+            CreateMap<ReplyReviewCreationDTO, Reply>();
+            CreateMap<Reply, ReplyReviewResponseDTO>();
         }
     }
 }

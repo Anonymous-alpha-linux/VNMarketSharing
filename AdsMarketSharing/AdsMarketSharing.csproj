@@ -83,6 +83,18 @@
     <Compile Remove="Migrations\20221004111203_add foreign key userid to invoice table.Designer.cs" />
     <Compile Remove="Migrations\20221004113143_add foreign key userid to invoice table.cs" />
     <Compile Remove="Migrations\20221004113143_add foreign key userid to invoice table.Designer.cs" />
+    <Compile Remove="Migrations\20221005151952_create review table.cs" />
+    <Compile Remove="Migrations\20221005151952_create review table.Designer.cs" />
+    <Compile Remove="Migrations\20221006054411_add userId and userPageId property to reply table.cs" />
+    <Compile Remove="Migrations\20221006054411_add userId and userPageId property to reply table.Designer.cs" />
+    <Compile Remove="Migrations\20221007151124_modify nullable attachmentId prop from user table.cs" />
+    <Compile Remove="Migrations\20221007151124_modify nullable attachmentId prop from user table.Designer.cs" />
+    <Compile Remove="Migrations\20221007151815_modify nullable attachmentId prop from user table.cs" />
+    <Compile Remove="Migrations\20221007151815_modify nullable attachmentId prop from user table.Designer.cs" />
+    <Compile Remove="Migrations\20221009071243_eliminate userId property from reply table.cs" />
+    <Compile Remove="Migrations\20221009071243_eliminate userId property from reply table.Designer.cs" />
+    <Compile Remove="Migrations\20221009071611_eliminate userId property from reply table.cs" />
+    <Compile Remove="Migrations\20221009071611_eliminate userId property from reply table.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

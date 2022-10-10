@@ -167,6 +167,7 @@ namespace AdsMarketSharing.Repositories
                 _httpContext.HttpContext.Response.Cookies.Append("jwt", tokenResponse.Data.JWTToken, _cookieOptions);
                 _httpContext.HttpContext.Response.Cookies.Append("r_jwt", tokenResponse.Data.RefreshToken, _cookieOptions);
 
+
                 // 7. Define the response
                 response.Data = new GetAccountInfoDTO()
                 {
