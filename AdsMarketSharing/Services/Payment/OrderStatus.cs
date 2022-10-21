@@ -1,10 +1,14 @@
-﻿namespace AdsMarketSharing.Services.Payment
+﻿using System.Text.Json.Serialization;
+
+namespace AdsMarketSharing.Services.Payment
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum OrderStatus
     {
-        Pending = 0,
-        Resolved = 1,
-        Completed = 2,
-        Reject = 3
+        Pending,
+        Waiting,
+        Delivering,
+        Completed, 
+        Cancelled
     }
 }

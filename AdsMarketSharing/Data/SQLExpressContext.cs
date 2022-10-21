@@ -1,5 +1,6 @@
 ﻿using AdsMarketSharing.Entities;
 using AdsMarketSharing.Entities.Functions;
+using AdsMarketSharing.Services.Payment;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -38,10 +39,10 @@ namespace AdsMarketSharing.Data
                 new Role { Id = 4,Name = Static.AccountRole.Collaborator }
             );
 
-            modelBuilder.Entity<AccountRole>().HasKey(accountRole => new { accountRole.AccountId ,accountRole.RoleId });
-            
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
+            modelBuilder.Entity<AccountRole>().HasKey(accountRole => new { accountRole.AccountId ,accountRole.RoleId });
+            modelBuilder.Entity<Order>().Property(p => p.OrderStatus).HasDefaultValue(OrderStatus.Pending).HasConversion(c => c.ToString(), c => System.Enum.Parse<OrderStatus>(c));
             //Scalars.RegisterFunction(modelBuilder);   
         }
 
@@ -65,5 +66,7 @@ namespace AdsMarketSharing.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Reply> Replies { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Notifytracker> Notifytrackers { get; set; }
     }
 }

@@ -5,9 +5,18 @@ namespace AdsMarketSharing.Hubs
 {
     public class NotifyHub: Hub
     {
-        public async Task Send(string name, string message)
+        public Task NotifyReview(string name, string message)
         {
-            await Clients.All.SendAsync("broadcastNotify", name, message);
+            return Clients.All.SendAsync("broadcastNotify", name, message);
         }
+
+        //public Task NotifyNewProduct(int productId) {
+           
+        //}
+
+        //public Task NotifyProductInspection(int productId)
+        //{
+
+        //}
     }
 }

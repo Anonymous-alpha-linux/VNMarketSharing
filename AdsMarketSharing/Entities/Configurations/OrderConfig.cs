@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AdsMarketSharing.Entities;
+using AdsMarketSharing.Services.Payment;
 
 namespace AdsMarketSharing.Entities.Configurations
 {
@@ -15,6 +16,7 @@ namespace AdsMarketSharing.Entities.Configurations
             builder.HasOne(p => p.Merchant).WithMany(p => p.Orders).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne(p => p.Invoice).WithMany(p => p.Orders).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne(p => p.Product).WithMany(p => p.Orders).OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

@@ -155,6 +155,7 @@ namespace AdsMarketSharing.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateNewProduct([FromForm]AddProductRequestDTO request)
         {
+           
             // 1. Handle IFormFile
             request.Attachments = await CreateFolderAndSaveImage(request.Files);
 
@@ -198,13 +199,18 @@ namespace AdsMarketSharing.Controllers
                     return NotFound("Cannot find your categories");
                 }
 
-                _dbContext.Add(product);
+                var newProductId = _dbContext.Products.Add(product);
                 if(classifyDetail != null)
                 {
-                    _dbContext.AddRange(classifyDetail);
+                    _dbContext.ProductClassfiyDetails.AddRange(classifyDetail);
                 }
                 _dbContext.SaveChanges();
-                return StatusCode(201, "created");
+
+                return StatusCode(201, new
+                {
+                    Message = "Created new product",
+                    ProductId = newProductId
+                });
             }
             catch (System.Exception e)
             {

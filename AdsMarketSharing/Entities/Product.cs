@@ -27,8 +27,8 @@ namespace AdsMarketSharing.Entities
             }
         }
         public bool HasAccepted { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
         [ForeignKey(nameof(UserPage))]
         public int UserPageId { get; set; }
         public UserPage UserPage { get; set; }

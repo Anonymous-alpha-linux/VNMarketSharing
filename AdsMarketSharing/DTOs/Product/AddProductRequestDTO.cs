@@ -22,6 +22,7 @@ namespace AdsMarketSharing.DTOs.Product
         public List<int> CategoryIds { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        [MinLength(1)]
         [FileSizeValidator(5)]
         [ContentTypeValidator(ContentTypeGroup.Image)]
         public List<IFormFile> Files { get; set; }
