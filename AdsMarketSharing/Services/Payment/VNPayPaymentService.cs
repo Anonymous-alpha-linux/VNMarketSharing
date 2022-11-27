@@ -38,6 +38,7 @@ namespace AdsMarketSharing.Services.Payment
             string vnp_Url = ConfigurationManager.Url; //URL thanh toan cua VNPAY 
             string vnp_TmnCode = ConfigurationManager.TmnCode; //Ma website
             string vnp_HashSecret = ConfigurationManager.HashSecret; //Chuoi bi mat
+
             if (string.IsNullOrEmpty(vnp_TmnCode) || string.IsNullOrEmpty(vnp_HashSecret))
             {
                 response.Data = null;

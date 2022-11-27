@@ -20,6 +20,7 @@ namespace AdsMarketSharing.Entities
         public DateTime ExpireTime { get; set; } = DateTime.Now.AddDays(1);
         public OrderStatus OrderStatus { get; set; } = OrderStatus.Pending;
         public OrderType Type { get; set; } = OrderType.TOPUP;
+        public string ProductImage { get; set; }
 
         [ForeignKey(nameof(Product))]
         public int ProductId { get; set; }

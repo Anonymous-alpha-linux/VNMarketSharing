@@ -7,7 +7,7 @@ namespace AdsMarketSharing.Validations
     public class ContentTypeValidator: ValidationAttribute
     {
         private readonly string[] _allowedContentTypes;
-        private readonly string[] _allowedImageTypes = { "image/jpeg", "image/png", "image/gif" };
+        private readonly string[] _allowedImageTypes = { "image/jpeg", "image/png", "image/jpg", "image/gif" };
         private readonly string[] _allowedRawTypes = { "image/jpeg", "image/png", "image/gif" };
         private readonly string[] _allowedVideoTypes = { "image/jpeg", "image/png", "image/gif" };
         private readonly string[] _allowedApplicationTypes = { "image/jpeg", "image/png", "image/gif" };

@@ -13,6 +13,7 @@ using AdsMarketSharing.Entities;
 using AdsMarketSharing.DTOs.User;
 using Microsoft.EntityFrameworkCore;
 using AdsMarketSharing.DTOs.UserPage;
+using AutoMapper.QueryableExtensions;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -52,7 +53,6 @@ namespace AdsMarketSharing.Controllers
             }
         }
 
-
         [HttpPost("profile")]
         public async Task<IActionResult> CreateOrUpdateUserPage([FromQuery] int userId, UserPageCreationDTO request)
         {
@@ -67,28 +67,36 @@ namespace AdsMarketSharing.Controllers
 
                 _context.Update(userPageEntity);
                 _context.SaveChanges();
-                return Ok("Updated");
+                return Ok(userPageEntity);
             }
             catch (System.Exception e)
             {
                 return BadRequest(e.Message);
             }
         }
+
         [HttpPut("avatar")]
         public async Task<IActionResult> ChangeAvatar([FromForm]IFormFile newAvatar, int userId)
         {
             try
             {
                 string usernameStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.Email).Value;
-                var userpage = await _context.UserPages.FirstOrDefaultAsync(up => up.UserId == userId);
-                if (userpage == null) userpage = new UserPage();
+                var userpage = await _context.UserPages.Include(p => p.PageAvatar).FirstOrDefaultAsync(up => up.UserId == userId);
+                if (userpage == null) return StatusCode(404, "You are not allowed");
+                AttachmentResponseDTO avatarEntity = null;
 
-                var avatarEntity = _fileStorageService.CreateFolderAndSaveImage(newAvatar.FileName, newAvatar.OpenReadStream(), usernameStr).Result.Data;
+                if (userpage == null) userpage = new UserPage();
+                
+                avatarEntity = userpage.PageAvatar != null 
+                    ? _fileStorageService.UpdateExistingFile(userpage.PageAvatar.Name, newAvatar.FileName, newAvatar.OpenReadStream(), usernameStr).Result.Data
+                    : _fileStorageService.CreateFolderAndSaveImage(newAvatar.FileName, newAvatar.OpenReadStream(), usernameStr).Result.Data;
+
                 var uploadAttachment = _mapper.Map<Attachment>(avatarEntity);
+
                 userpage.UserId = userId;
                 userpage.PageAvatar = uploadAttachment;
 
-                _context.Update(userpage);
+                _context.UserPages.Update(userpage);
                 _context.SaveChanges();
                 return Ok("Changed user page avatar");
             }
@@ -102,7 +110,7 @@ namespace AdsMarketSharing.Controllers
         {
             string usernameStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.Email).Value;
             var userpage = await _context.UserPages.FirstOrDefaultAsync(up => up.UserId == userId);
-            if (userpage == null) userpage = new UserPage();
+            if (userpage == null) return StatusCode(404, "You are not allowed");
 
             var avatarEntity = _fileStorageService.CreateFolderAndSaveImage(newBanner.FileName, newBanner.OpenReadStream(), usernameStr).Result.Data;
             var uploadAttachment = _mapper.Map<Attachment>(avatarEntity);
@@ -114,11 +122,22 @@ namespace AdsMarketSharing.Controllers
             return Ok("Changed user page banner");
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         [HttpPut("block")]
         public async Task<IActionResult> BlockUserPage()
         {
             return Ok();
         }
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("list")]
+        public async Task<IActionResult> GetSellerList()
+        {
+            var sellerList = _context.UserPages.Include(p => p.BannerUrl).AsQueryable();
+
+            var result = sellerList.ProjectTo<GetUserPageResponseDTO>(_mapper.ConfigurationProvider).ToList();
+            return Ok(result);
+        }
+
     }
 }

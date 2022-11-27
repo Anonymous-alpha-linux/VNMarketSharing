@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using System.Collections.Generic;
 
 namespace AdsMarketSharing.Services.FileUpload
 {
@@ -39,7 +40,6 @@ namespace AdsMarketSharing.Services.FileUpload
                     UniqueFilename = true,
                     Overwrite = true,
                     Folder = folder,
-
                 };
                 var uploadResult = await cloudinary.UploadAsync(uploadParams);
 
@@ -106,10 +106,66 @@ namespace AdsMarketSharing.Services.FileUpload
 
             return await SaveImage(fileName, fileStream, newFolder);
         }
+        public async Task<ServiceResponse<AttachmentResponseDTO>> UpdateExistingFile(string removedPublicId, string newFileName, Stream fileStream, string newFolderName)
+        {
+            var cloudinary = new Cloudinary(_cloudinaryAccount);
+            var response = new ServiceResponse<AttachmentResponseDTO>();
 
+            try
+            {
+                var deleteTask = DeleteFile(removedPublicId);
+                var savedFileTask = CreateFolderAndSaveImage(newFileName, fileStream, newFolderName);
+                await Task.WhenAll(deleteTask, savedFileTask);
+                var deleted = await deleteTask;
+                var savedFile = await savedFileTask;
 
+                if (deleteTask.Result.Data == false || deleteTask.IsFaulted == true)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.Failed, deleteTask.Result.ServerMessage);
+                }
+                
+               return savedFile;
+            }
+            catch (ServiceResponseException<ResponseStatus> exception)
+            {
+                response.Data = null;
+                response.Message = "Update file failed";
+                response.ServerMessage = exception.Message;
+                response.Status = exception.Value;
+                response.StatusCode = exception.StatusCode;
+            }
 
+            return response;
+        }
+        public async Task<ServiceResponse<bool>> DeleteFile(string publicId)
+        {
+            var cloudinary = new Cloudinary(_cloudinaryAccount);
+            var response = new ServiceResponse<bool>();
 
+            try
+            {
+                var clodinaryResult = cloudinary.Destroy(new DeletionParams(publicId));
+
+                if (clodinaryResult.Error != null)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.Failed, clodinaryResult.Error.Message);
+                }
+                response.Data = true;
+                response.Message = "Deleted file";
+                response.ServerMessage = "Completed service";
+                response.Status = ResponseStatus.Successed;
+                response.StatusCode = 200;
+            }
+            catch (ServiceResponseException<ResponseStatus> exception)
+            {
+                response.Data = false;
+                response.Message = "Delete failed";
+                response.ServerMessage = exception.Message;
+                response.Status = exception.Value;
+                response.StatusCode = exception.StatusCode;
+            }
+            return response;
+        }
         public async Task<ServiceResponse<bool>> AddNewFile(IFormFile formFile)
         {
             var response = new ServiceResponse<bool>();
@@ -143,35 +199,7 @@ namespace AdsMarketSharing.Services.FileUpload
             }
             return response;
         }
-        public async Task<ServiceResponse<bool>> DeleteFile(string publicId)
-        {
-            var cloudinary = new Cloudinary(_cloudinaryAccount);
-            var response = new ServiceResponse<bool>();
 
-            try
-            {
-                var clodinaryResult = cloudinary.Destroy(new DeletionParams(publicId));
-
-                if (clodinaryResult.Error != null)
-                {
-                    throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.Failed, clodinaryResult.Error.Message);
-                }
-                response.Data = true;
-                response.Message = "Deleted file";
-                response.ServerMessage = "Completed service";
-                response.Status = ResponseStatus.Successed;
-                response.StatusCode = 200;
-            }
-            catch (ServiceResponseException<ResponseStatus> exception)
-            {
-                response.Data = false;
-                response.Message = "Delete failed";
-                response.ServerMessage = exception.Message;
-                response.Status = exception.Value;
-                response.StatusCode = exception.StatusCode;
-            }
-            return response;
-        }
         public Task<ServiceResponse<bool>> EditFile(IFormFile formFile)
         {
             throw new System.NotImplementedException();

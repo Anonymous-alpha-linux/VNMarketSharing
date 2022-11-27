@@ -1,5 +1,6 @@
 ﻿using AdsMarketSharing.DTOs.Account;
 using AdsMarketSharing.DTOs.Token;
+using AdsMarketSharing.DTOs.User;
 using AdsMarketSharing.Models;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace AdsMarketSharing.Interfaces
         Task<ServiceResponse<GetAccountInfoDTO>> Login(LoginAccountDTO requestAccount);
         ServiceResponse<bool> Logout();
         Task<ServiceResponse<GetRegisterInfo>> Register(RegisterNewAccountDTO requestAccount);
+        Task<ServiceResponse<GetRegisterInfo>> RegisterWithUserInfo(RegisterAccountWithUserDTO requestAccount);
         Task<ServiceResponse<GetUserAccountDTO>> GetUser();
         Task<ServiceResponse<GetUserAccountDTO>> GetUserByEmail(string email);
         Task<ServiceResponse<GetRoleDTO>> AssignRole(AssignRoleToAccountDTO requestRoleAccount);

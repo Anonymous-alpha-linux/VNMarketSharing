@@ -17,6 +17,7 @@ namespace AdsMarketSharing.DTOs.Payment
         public string OrderStatus { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; }
+        public string ProductImage { get; set; }
         public int MerchantId { get; set; }
         public string Merchant { get; set; }
         public int AddressId { get; set; }

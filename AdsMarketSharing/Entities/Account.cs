@@ -21,7 +21,7 @@ namespace AdsMarketSharing.Entities
         public AccountStatus Status { get; set; } = AccountStatus.Newbie;
         public List<AccountRole> AccountRoles { get; set; }
         public List<RefreshToken> RefreshToken { get; set; }
-        public User User { get; set; }
+        public User? User { get; set; }
     }
 
 }

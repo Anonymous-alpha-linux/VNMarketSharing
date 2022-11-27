@@ -17,5 +17,6 @@ namespace AdsMarketSharing.DTOs.Payment
         public ShippingMethod Shipping { get; set; }
         public PaymentCreationDTO? Payment { get; set; }
         public List<OrderCreationDTO> Orders { get; set; }
+        public int UserId { get; set; }
     }
 }

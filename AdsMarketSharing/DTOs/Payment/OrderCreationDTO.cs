@@ -25,6 +25,7 @@ namespace AdsMarketSharing.DTOs.Payment
         public DateTime ExpireTime { get; set; }
         public OrderStatus OrderStatus { get; set; } = OrderStatus.Pending;
         public OrderType Type { get; set; } = OrderType.TOPUP;
+        public string ProductImage { get; set; }
         public int ProductId { get; set; }
         public int BuyerId { get; set; }
         public int MerchantId { get; set; }

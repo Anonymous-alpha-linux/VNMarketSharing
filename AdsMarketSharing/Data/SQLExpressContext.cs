@@ -1,5 +1,6 @@
 ﻿using AdsMarketSharing.Entities;
 using AdsMarketSharing.Entities.Functions;
+using AdsMarketSharing.Entities.Keyless;
 using AdsMarketSharing.Services.Payment;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -24,10 +25,15 @@ namespace AdsMarketSharing.Data
 
     public class SQLExpressContext : DbContext
     {
+        public SQLExpressContext() : base()
+        {
+
+        }
         public SQLExpressContext(DbContextOptions<SQLExpressContext> options) : base(options)
         {
 
-        }  
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -43,6 +49,7 @@ namespace AdsMarketSharing.Data
 
             modelBuilder.Entity<AccountRole>().HasKey(accountRole => new { accountRole.AccountId ,accountRole.RoleId });
             modelBuilder.Entity<Order>().Property(p => p.OrderStatus).HasDefaultValue(OrderStatus.Pending).HasConversion(c => c.ToString(), c => System.Enum.Parse<OrderStatus>(c));
+            //modelBuilder.Entity<SellerDashboard>().ToQuery("SELECT * FROM ")
             //Scalars.RegisterFunction(modelBuilder);   
         }
 
@@ -55,6 +62,7 @@ namespace AdsMarketSharing.Data
         public DbSet<Attachment> Attachments { get; set; }
         public DbSet<ReceiverAddress> ReceiverAddresses { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductAttachment> ProductAttachments { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<ProductCategory> ProductCategories { get; set; }
         public DbSet<UserPage> UserPages { get; set; }

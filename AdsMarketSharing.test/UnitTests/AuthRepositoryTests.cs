@@ -8,6 +8,8 @@ using AdsMarketSharing.Repositories;
 using AdsMarketSharing.DTOs.Account;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using AdsMarketSharing.Services.FileUpload;
+using Castle.Core.Configuration;
 
 namespace AdsMarketSharing.Test.UnitTests
 {
@@ -26,7 +28,7 @@ namespace AdsMarketSharing.Test.UnitTests
                 {"AppSettings:Token", "Secrete testing" }
             };
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(configLst).Build();
-            _authRepository = new AuthRepository(_mapper, _context, configuration, _httpContext);
+            _authRepository = new AuthRepository(_mapper, _context, configuration, _httpContext, new CloudinaryStorageService(configuration));
             var account = new RegisterNewAccountDTO()
             {
                 Email = "test@email.com",
@@ -48,7 +50,7 @@ namespace AdsMarketSharing.Test.UnitTests
                 {"AppSettings:Token", "Secrete testing" }
             };
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(configLst).Build();
-            _authRepository = new AuthRepository(_mapper, _context, configuration, _httpContext);
+            _authRepository = new AuthRepository(_mapper, _context, configuration, _httpContext, new CloudinaryStorageService(configuration));
             var account = new RegisterNewAccountDTO()
             {
                 Email = "test1@email.com",
@@ -66,7 +68,12 @@ namespace AdsMarketSharing.Test.UnitTests
         public async Task Register_UnavalableRole_Return404()
         {
             // Arrange
-            _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+            var configLst = new Dictionary<string, string>()
+            {
+                {"AppSettings:Token", "Secrete testing" }
+            };
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(configLst).Build();
+            _authRepository = new AuthRepository(_mapper, _context, configuration, _httpContext, new CloudinaryStorageService(configuration));
             var account = new RegisterNewAccountDTO()
             {
                 Email = "test2@email.com",
@@ -85,7 +92,7 @@ namespace AdsMarketSharing.Test.UnitTests
         [Test]
         public async Task Login_ExistingAccount_Return200() {
             // Arrange
-            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext, new CloudinaryStorageService(_configuration));
 
             // Seed account data
             var account = new RegisterNewAccountDTO()
@@ -116,7 +123,7 @@ namespace AdsMarketSharing.Test.UnitTests
         public async Task Login_NotExistingAccount_Return404()
         {
             // Arrange
-            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext, new CloudinaryStorageService(_configuration));
             var loginAccount = new LoginAccountDTO()
             {
                 Email = "unknown@email.com",
@@ -131,7 +138,7 @@ namespace AdsMarketSharing.Test.UnitTests
         public async Task Login_SignedInAlready_Return401()
         {
             // Arrange
-            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext, new CloudinaryStorageService(_configuration));
 
             // Seed account data
             var account = new RegisterNewAccountDTO()
@@ -163,7 +170,7 @@ namespace AdsMarketSharing.Test.UnitTests
         public async Task Login_IncorrectPassword_Return400()
         {
             // Arrange
-            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext, new CloudinaryStorageService(_configuration));
             // Seed account data
             var account = new RegisterNewAccountDTO()
             {
@@ -193,7 +200,8 @@ namespace AdsMarketSharing.Test.UnitTests
         public async Task Login_NotActiveAccount_Return403()
         {
             // Arrange
-            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+
+            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext, new CloudinaryStorageService(_configuration));
             // Seed account data
             var account = new RegisterNewAccountDTO()
             {
@@ -222,9 +230,8 @@ namespace AdsMarketSharing.Test.UnitTests
         [Test]
         public async Task Logout_SignedInAlreadry_Return200() {
             // Arrange
-
             _httpContext.HttpContext.Request.Cookies = MockRequestCookieCollection("jwt", "tokenabc");
-            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+            var _authRepository = new AuthRepository(_mapper, _context, _configuration, _httpContext, new CloudinaryStorageService(_configuration)  );
             // Seed account data
             var account = new RegisterNewAccountDTO()
             {

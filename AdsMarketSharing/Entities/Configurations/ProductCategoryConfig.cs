@@ -7,7 +7,8 @@ namespace AdsMarketSharing.Entities.Configurations
     {
         public void Configure(EntityTypeBuilder<ProductCategory> builder)
         {
-            builder.HasKey(productCategory => new {productCategory.ProductId, productCategory.CategoryId });
+            //builder.HasKey(productCategory => new {productCategory.ProductId, productCategory.CategoryId });
+            builder.HasKey(p => p.Id);
         }
     }
 }

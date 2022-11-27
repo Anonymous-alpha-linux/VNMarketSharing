@@ -12,6 +12,8 @@ using AutoMapper;
 using AdsMarketSharing.Entities;
 using AdsMarketSharing.DTOs.User;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper.QueryableExtensions;
+using System.IdentityModel.Tokens.Jwt;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -63,51 +65,42 @@ namespace AdsMarketSharing.Controllers
         [HttpPost("avatar")]
         public async Task<IActionResult> ChangeAvatar([FromForm] UploadFileDTO request)
         {
-            // 1. Create folder on cloudinary
+            // 1. Get the info of user
             string usernameStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.Email).Value;
-            var createFolderAction = await _fileStorageService.CreateFolder(usernameStr);
-
-            if (createFolderAction.Status != ResponseStatus.Successed)
-            {
-                return StatusCode(createFolderAction.StatusCode, createFolderAction);
-            }
-            // 2. Save to that specific folder
-            var saveImageAction = await _fileStorageService.SaveImage(request.File.FileName, request.File.OpenReadStream(), createFolderAction.Data);
-            if (saveImageAction.Status != ResponseStatus.Successed)
-            {
-                return StatusCode(saveImageAction.StatusCode, saveImageAction);
-            }
-
-            // 3. Upload avatar
-            // 3.1. Save attachment
-            var attachmentRecord = await _unitOfWork.AttachmentRepository.Add(_mapper.Map<AttachmentResponseDTO, Attachment>(saveImageAction.Data));
-            if (attachmentRecord == null)
-            {
-                return StatusCode(500, "Something got wrong in server");
-            }
-            await _unitOfWork.CompleteAsync();
-            // 3.2. Update to User
             string nameIdentifierStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
-            var userRecords = (await _unitOfWork.UserRepository.Find(user => user.AccountId.ToString() == nameIdentifierStr)).ToList();
 
-            Entities.User userRecord = new Entities.User();
-            if (userRecords.Count != 0)
+            var userRecord = _context.Users.Include(p => p.Avatar).FirstOrDefault(p => p.AccountId.ToString() == nameIdentifierStr);
+
+            if (userRecord.Avatar == null)
             {
-                userRecord = userRecords[0];
+                var serviceResponseNullAvatar = (await _fileStorageService.CreateFolderAndSaveImage(request.File.FileName,request.File.OpenReadStream(), usernameStr));
+
+                userRecord.Avatar = _mapper.Map<Attachment>(serviceResponseNullAvatar.Data);
+
+                _context.Users.Update(userRecord);
+
+                _context.SaveChanges();
+
+                return StatusCode(serviceResponseNullAvatar.StatusCode, new
+                {
+                    Message = "Added new avatar",
+                    NewAvatar = serviceResponseNullAvatar.Data.PublicPath
+                });
             }
-            userRecord.AttachmentId = attachmentRecord.Id;
-            int accountId;
-            if (int.TryParse(nameIdentifierStr, out accountId))
-            {
-                userRecord.AccountId = accountId;
-            }
-            var newUserRecord = await _unitOfWork.UserRepository.Upsert(userRecord);
-            if (newUserRecord == null)
-            {
-                return StatusCode(500, "Something got wrong in server");
-            }
-            await _unitOfWork.CompleteAsync();
-            return StatusCode(saveImageAction.StatusCode, new { NewAvatar = attachmentRecord.PublicPath });
+
+            var serviceResponseHadAvatar = (await _fileStorageService.UpdateExistingFile(userRecord.Avatar.Name, request.File.FileName, request.File.OpenReadStream(), usernameStr));
+
+            _context.Attachments.Remove(userRecord.Avatar);
+
+            userRecord.Avatar = _mapper.Map<Attachment>(serviceResponseHadAvatar.Data);
+            _context.Users.Update(userRecord);
+
+            _context.SaveChanges();
+
+            return StatusCode(serviceResponseHadAvatar.StatusCode, new { 
+                Message = "Updated avatar",
+                NewAvatar = serviceResponseHadAvatar.Data.PublicPath 
+            });
         }
         [HttpGet("info")]
         public async Task<IActionResult> GetUserInfo([FromQuery]int userId)
@@ -154,6 +147,45 @@ namespace AdsMarketSharing.Controllers
             return Ok();
         }
 
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("list")]
+        public async Task<IActionResult> GetUserList()
+        {
+            var sellerList = _context.Users.Include(p => p.Avatar).Include(p => p.Account).AsQueryable();
+
+            var result = sellerList.ProjectTo<GetUserByAdminDTO>(_mapper.ConfigurationProvider).ToList();
+            return Ok(result);
+        }
+        [Authorize(Policy = "AdminOnly")]
+        [HttpPut("block")]
+        public async Task<IActionResult> BlockUser(int userId, bool isBlocked)
+        {
+            string accountIdStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
+            int.TryParse(accountIdStr, out int accountId);
+
+            var foundUser = _context.Accounts
+                .Include(p => p.AccountRoles)
+                .ThenInclude(p => p.Role)
+                .FirstOrDefault(p => p.User.Id == userId);
+            if(accountId == foundUser.Id)
+            {
+                return BadRequest("You cannot block yourself");
+            }
+
+            if(foundUser.AccountRoles.Any(p => p.RoleId == 1 || p.Role.Name.ToLower().Contains("admin")))
+            {
+                return BadRequest("Cannot block this user");
+            }
+
+            foundUser.Enabled = !isBlocked;
+
+            _context.Accounts.Update(foundUser);
+            _context.SaveChanges();
+            return Ok(new
+            {
+                Message = isBlocked ? "Blocked this user" : "Unlocked this user"
+            });
+        }
 
         // 2. Address Visitor 
         [Authorize]
@@ -280,6 +312,7 @@ namespace AdsMarketSharing.Controllers
                 return StatusCode(500, e.Message);
             }
         }
+
 
     }
 }
