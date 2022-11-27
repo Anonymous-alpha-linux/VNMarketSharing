@@ -48,7 +48,8 @@ namespace AdsMarketSharing.Repositories
                 Secure = true,
                 IsEssential = true,
                 Path = "/",
-                Domain = _configuration.GetSection("AppSettings:CookieDomain").Value,
+                //Domain = _configuration.GetSection("AppSettings:CookieDomain").Value,
+                Domain = _httpContext.HttpContext.Request.Host.Host,
                 SameSite = SameSiteMode.None,
             };
             _fileStorageService = fileStorageService;

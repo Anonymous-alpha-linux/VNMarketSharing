@@ -175,6 +175,7 @@ namespace AdsMarketSharing
             app.UseForwardedHeaders(new ForwardedHeadersOptions() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All });
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseCookiePolicy();
             app.UseCors("AllowAPIRequestIO");
             app.UseAuthentication();
 
