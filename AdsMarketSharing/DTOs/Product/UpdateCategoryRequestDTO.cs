@@ -3,7 +3,7 @@
     public class UpdateCategoryRequestDTO
     {
         public string Name { get; set; }
-        public string Level { get; set; }
-        public int? CategoryId { get; set; }
+        public int Level { get; set; }
+        public int? ParentCategoryId { get; set; }
     }
 }

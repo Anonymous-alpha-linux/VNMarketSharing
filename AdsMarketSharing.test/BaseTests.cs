@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Net.Http.Headers;
 using Microsoft.Extensions.Primitives;
 using Moq;
+using AdsMarketSharing.Services.FileUpload;
 
 namespace AdsMarketSharing.Test
 {
@@ -71,7 +72,7 @@ namespace AdsMarketSharing.Test
 
         public AuthRepository BuildAuthReposity()
         {
-            var authRepo = new AuthRepository(_mapper, _context, _configuration, _httpContext);
+            var authRepo = new AuthRepository(_mapper, _context, _configuration, _httpContext, new CloudinaryStorageService(_configuration));
             return authRepo;
         }
 

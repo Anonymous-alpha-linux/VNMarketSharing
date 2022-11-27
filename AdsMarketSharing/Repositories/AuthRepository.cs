@@ -22,6 +22,8 @@ using AdsMarketSharing.Enum;
 using AdsMarketSharing.DTOs.Token;
 using AutoMapper;
 using AdsMarketSharing.Entities;
+using AdsMarketSharing.DTOs.User;
+using AutoMapper.QueryableExtensions;
 
 namespace AdsMarketSharing.Repositories
 {
@@ -32,7 +34,8 @@ namespace AdsMarketSharing.Repositories
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContext;
         private readonly CookieOptions _cookieOptions;
-        public AuthRepository(IMapper mapper, SQLExpressContext context,IConfiguration configuration, IHttpContextAccessor httpContext)
+        private readonly IFileStorageService _fileStorageService;
+        public AuthRepository(IMapper mapper, SQLExpressContext context, IConfiguration configuration, IHttpContextAccessor httpContext, IFileStorageService fileStorageService)
         {
             _mapper = mapper;
             _context = context;
@@ -48,6 +51,7 @@ namespace AdsMarketSharing.Repositories
                 Domain = _configuration.GetSection("AppSettings:CookieDomain").Value,
                 SameSite = SameSiteMode.None,
             };
+            _fileStorageService = fileStorageService;
         }
         public async Task<ServiceResponse<GetRegisterInfo>> Register(RegisterNewAccountDTO requestAccount)
         {
@@ -76,26 +80,95 @@ namespace AdsMarketSharing.Repositories
                 // 3.1. Create User Profile also
                 User newUser = new User();
                 newUser.Account = newAccount;
+                newUser.Avatar = new Attachment()
+                {
+                    
+                };
 
                 // 4. Add the new account to db
-                await _context.Accounts.AddAsync(newAccount);
+                //_context.Accounts.Add(newAccount);
                 _context.Users.Add(newUser);
 
                 // 5. Save the current markup   
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
 
                 // 6. Assign Role to Account
-                int accountId = (await _context.Accounts.FirstOrDefaultAsync(account => account.Email == requestAccount.Email)).Id;
+                //int accountId = (await _context.Accounts.FirstOrDefaultAsync(account => account.Email == requestAccount.Email)).Id;
                 var assignRoletoAccount = await AssignRole(new AssignRoleToAccountDTO()
                 {
-                    AccountId = accountId,
+                    AccountId = newUser.AccountId,
                     RoleId = foundRole.Id
                 });
 
                 // 7. Define the response
                 response.Data = new GetRegisterInfo { 
-                    AccountId = accountId,
+                    AccountId = newUser.AccountId,
                     Email = newAccount.Email,
+                };
+                response.Message = "Please check email to verify your email";
+                response.ServerMessage = "Add new account successfully";
+                response.Status = ResponseStatus.Successed;
+                response.StatusCode = 201;
+            }
+            catch (ServiceResponseException<ResponseStatus> exception)
+            {
+                // 1. Define the error resposne 
+                response.Data = null;
+                response.Message = "Added failed!";
+                response.ServerMessage = exception.Message;
+                response.Status = exception.Value;
+                response.StatusCode = exception.StatusCode;
+            }
+            return response;
+        }
+        public async Task<ServiceResponse<GetRegisterInfo>> RegisterWithUserInfo(RegisterAccountWithUserDTO requestAccount)
+        {
+            var response = new ServiceResponse<GetRegisterInfo>();
+            try
+            {
+                // Condition 1. Validate the existence of username or email within account
+                bool isExistedEmail = await EmailExists(requestAccount.Account.Email);
+                if (isExistedEmail)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(403, ResponseStatus.Failed, "User has been existed!");
+                }
+                // Hashing password before getting the register
+                CreateHashedPassword(requestAccount.Account.Password, out byte[] passwordHash, out byte[] passwordSalt);
+  
+                // Condition 2. Search out role to assign
+                Role foundRole = await _context.Roles.FirstOrDefaultAsync(role => role.Id == requestAccount.Account.RoleId);
+                if (foundRole == null)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(404, ResponseStatus.Failed, "Role didn't exist to assign");
+                }
+                // 3. Create new Account
+                requestAccount.Avatar = (await _fileStorageService.CreateFolderAndSaveImage(requestAccount.Image.FileName, requestAccount.Image.OpenReadStream(), requestAccount.Account.Email)).Data;
+                User newUserProfile = _mapper.Map<User>(requestAccount);
+                newUserProfile.Account.PasswordHash = passwordHash;
+                newUserProfile.Account.PasswordSalt = passwordSalt;
+
+                // 3.1. Create User Profile also
+                
+                // 4. Add the new account to db
+                //_context.Accounts.Add(newAccount);
+                _context.Users.Add(newUserProfile);
+
+                // 5. Save the current markup   
+                _context.SaveChanges();
+
+                // 6. Assign Role to Account
+                //int accountId = (await _context.Accounts.FirstOrDefaultAsync(account => account.Email == requestAccount.Email)).Id;
+                var assignRoletoAccount = await AssignRole(new AssignRoleToAccountDTO()
+                {
+                    AccountId = newUserProfile.Account.Id,
+                    RoleId = foundRole.Id
+                });
+
+                // 7. Define the response
+                response.Data = new GetRegisterInfo
+                {
+                    AccountId = newUserProfile.Account.Id,
+                    Email = newUserProfile.Account.Email,
                 };
                 response.Message = "Please check email to verify your email";
                 response.ServerMessage = "Add new account successfully";
@@ -119,8 +192,15 @@ namespace AdsMarketSharing.Repositories
             try
             {
                 // Condition 1. Check if request had its token already
-                bool hasExistedJWT = _httpContext.HttpContext.Request.Cookies["jwt"] != null;
-                if (hasExistedJWT)
+                string existedJWT = _httpContext.HttpContext.Request.Cookies["jwt"];
+                string refreshJWT = _httpContext.HttpContext.Request.Cookies["r_jwt"];
+                bool hasValidated = existedJWT != null && refreshJWT != null && (await ValidateJWTToken(new AuthTokenRequest()
+                {
+                    Token = existedJWT,
+                    RefreshToken = refreshJWT,
+                })).Data;
+
+                if (hasValidated)
                 {
                     throw new ServiceResponseException<ResponseStatus>(400, ResponseStatus.Failed, "Your have already logged in to system");
                 }
@@ -225,20 +305,24 @@ namespace AdsMarketSharing.Repositories
                 }
                
                 string emailClaim = GetClaimValue(token, JwtRegisteredClaimNames.Email);
-                string accountIdClaim = GetClaimValue(token, JwtRegisteredClaimNames.NameId);
                 string roleClaim = GetClaimValue(token, JwtRegisteredClaimNames.Amr);
+                string accountIdClaim = GetClaimValue(token, JwtRegisteredClaimNames.NameId);
+
+                bool isParsed = int.TryParse(accountIdClaim, out int accountId);
+
+                var roles = _context.AccountRoles
+                    .Include(p => p.Account)
+                    .Include(p => p.Role)
+                    .Where(p => p.AccountId == accountId)
+                    .Select(p => p.Role)
+                    .ProjectTo<GetRoleDTO>(_mapper.ConfigurationProvider)
+                    .ToList();
 
                 response.Data = new GetUserAccountDTO()
                 {
                     Email = emailClaim,
                     AccountId = accountIdClaim,
-                    Roles = new List<GetRoleDTO>()
-                    {
-                        new GetRoleDTO
-                        {
-                            RoleName = roleClaim
-                        }
-                    }
+                    Roles = roles
                 };
                 response.Status = ResponseStatus.Successed;
                 response.StatusCode = 200;
@@ -550,6 +634,7 @@ namespace AdsMarketSharing.Repositories
                     new Claim(JwtRegisteredClaimNames.NameId, identityAccount.Id.ToString()),
                     new Claim(JwtRegisteredClaimNames.Email, identityAccount.Email),
                     new Claim(JwtRegisteredClaimNames.Amr, roleName),
+                    new Claim(ClaimTypes.Role, roleName),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
                 string internalKey = _configuration.GetSection("AppSettings:Token").Value;
@@ -723,7 +808,5 @@ namespace AdsMarketSharing.Repositories
             return new string(Enumerable.Repeat(chars, length)
                 .Select(x => x[random.Next(x.Length)]).ToArray());
         }
-
- 
     }
 }

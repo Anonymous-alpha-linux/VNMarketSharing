@@ -95,6 +95,32 @@
     <Compile Remove="Migrations\20221009071243_eliminate userId property from reply table.Designer.cs" />
     <Compile Remove="Migrations\20221009071611_eliminate userId property from reply table.cs" />
     <Compile Remove="Migrations\20221009071611_eliminate userId property from reply table.Designer.cs" />
+    <Compile Remove="Migrations\20221011051235_define ondelete on user table.cs" />
+    <Compile Remove="Migrations\20221011051235_define ondelete on user table.Designer.cs" />
+    <Compile Remove="Migrations\20221011074711_conversion of orderstatus property in order table.cs" />
+    <Compile Remove="Migrations\20221011074711_conversion of orderstatus property in order table.Designer.cs" />
+    <Compile Remove="Migrations\20221011075134_conversion of orderstatus property in order table.cs" />
+    <Compile Remove="Migrations\20221011075134_conversion of orderstatus property in order table.Designer.cs" />
+    <Compile Remove="Migrations\20221011075422_conversion of orderstatus property in order table.cs" />
+    <Compile Remove="Migrations\20221011075422_conversion of orderstatus property in order table.Designer.cs" />
+    <Compile Remove="Migrations\20221011080644_conversion of orderstatus property in order table.cs" />
+    <Compile Remove="Migrations\20221011080644_conversion of orderstatus property in order table.Designer.cs" />
+    <Compile Remove="Migrations\20221011084142_conversion of orderstatus property in order table.cs" />
+    <Compile Remove="Migrations\20221011084142_conversion of orderstatus property in order table.Designer.cs" />
+    <Compile Remove="Migrations\20221025125302_additional product table.cs" />
+    <Compile Remove="Migrations\20221025125302_additional product table.Designer.cs" />
+    <Compile Remove="Migrations\20221025125557_additional product table.cs" />
+    <Compile Remove="Migrations\20221025125557_additional product table.Designer.cs" />
+    <Compile Remove="Migrations\20221121093150_Reinitialize tables.cs" />
+    <Compile Remove="Migrations\20221121093150_Reinitialize tables.Designer.cs" />
+    <Compile Remove="Migrations\20221121123420_update user table.cs" />
+    <Compile Remove="Migrations\20221121123420_update user table.Designer.cs" />
+    <Compile Remove="Migrations\20221124173101_update product category model.cs" />
+    <Compile Remove="Migrations\20221124173101_update product category model.Designer.cs" />
+    <Compile Remove="Migrations\20221124173749_update product category model.cs" />
+    <Compile Remove="Migrations\20221124173749_update product category model.Designer.cs" />
+    <Compile Remove="Migrations\20221124174536_update product category model.cs" />
+    <Compile Remove="Migrations\20221124174536_update product category model.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

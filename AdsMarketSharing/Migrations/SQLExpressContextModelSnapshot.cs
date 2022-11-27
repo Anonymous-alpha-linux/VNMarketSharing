@@ -78,6 +78,9 @@ namespace AdsMarketSharing.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("FilePath")
                         .HasColumnType("nvarchar(max)");
 
@@ -93,15 +96,13 @@ namespace AdsMarketSharing.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ProductId")
-                        .HasColumnType("int");
-
                     b.Property<string>("PublicPath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("ProductId");
+                    b.HasKey("Id");
 
                     b.ToTable("Attachments");
                 });
@@ -170,6 +171,71 @@ namespace AdsMarketSharing.Migrations
                     b.ToTable("Invoices");
                 });
 
+            modelBuilder.Entity("AdsMarketSharing.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ShortMessage")
+                        .HasColumnType("nvarchar(40)")
+                        .HasMaxLength(40);
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("AdsMarketSharing.Entities.Notifytracker", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<bool>("HasSeen")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("NotificationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NotifyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("SeenTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifytrackers");
+                });
+
             modelBuilder.Entity("AdsMarketSharing.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -204,8 +270,11 @@ namespace AdsMarketSharing.Migrations
                     b.Property<int>("MerchantId")
                         .HasColumnType("int");
 
-                    b.Property<int>("OrderStatus")
-                        .HasColumnType("int");
+                    b.Property<string>("OrderStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("Pending");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -213,13 +282,19 @@ namespace AdsMarketSharing.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ProductImage")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Total")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("decimal(18,2)")
                         .HasComputedColumnSql("Amount * Price");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("TOPUP");
 
                     b.HasKey("Id");
 
@@ -285,6 +360,9 @@ namespace AdsMarketSharing.Migrations
                     b.Property<bool>("HasAccepted")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("HasDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("InPages")
                         .HasColumnType("bit");
 
@@ -301,6 +379,12 @@ namespace AdsMarketSharing.Migrations
                     b.Property<int>("SoldQuantity")
                         .HasColumnType("int");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("New");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -314,17 +398,39 @@ namespace AdsMarketSharing.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("AdsMarketSharing.Entities.ProductCategory", b =>
+            modelBuilder.Entity("AdsMarketSharing.Entities.ProductAttachment", b =>
                 {
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<int>("AttachmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductId", "AttachmentId");
+
+                    b.HasIndex("AttachmentId");
+
+                    b.ToTable("ProductAttachments");
+                });
+
+            modelBuilder.Entity("AdsMarketSharing.Entities.ProductCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.HasKey("ProductId", "CategoryId");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("ProductId");
 
                     b.ToTable("ProductCategories");
                 });
@@ -687,13 +793,6 @@ namespace AdsMarketSharing.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AdsMarketSharing.Entities.Attachment", b =>
-                {
-                    b.HasOne("AdsMarketSharing.Entities.Product", null)
-                        .WithMany("Attachments")
-                        .HasForeignKey("ProductId");
-                });
-
             modelBuilder.Entity("AdsMarketSharing.Entities.Category", b =>
                 {
                     b.HasOne("AdsMarketSharing.Entities.Category", "ParentCategory")
@@ -712,6 +811,28 @@ namespace AdsMarketSharing.Migrations
                         .WithMany("Invoices")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("AdsMarketSharing.Entities.Notification", b =>
+                {
+                    b.HasOne("AdsMarketSharing.Entities.User", "FromUser")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AdsMarketSharing.Entities.Notifytracker", b =>
+                {
+                    b.HasOne("AdsMarketSharing.Entities.Notification", "Notification")
+                        .WithMany("Notifytrackers")
+                        .HasForeignKey("NotificationId");
+
+                    b.HasOne("AdsMarketSharing.Entities.User", "ToUser")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AdsMarketSharing.Entities.Order", b =>
@@ -760,6 +881,21 @@ namespace AdsMarketSharing.Migrations
                     b.HasOne("AdsMarketSharing.Entities.UserPage", "UserPage")
                         .WithMany("Products")
                         .HasForeignKey("UserPageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AdsMarketSharing.Entities.ProductAttachment", b =>
+                {
+                    b.HasOne("AdsMarketSharing.Entities.Attachment", "Attachment")
+                        .WithMany("Products")
+                        .HasForeignKey("AttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AdsMarketSharing.Entities.Product", "Product")
+                        .WithMany("Attachments")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

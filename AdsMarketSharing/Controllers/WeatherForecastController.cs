@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace AdsMarketSharing.Controllers
 {
-    [Authorize]
     [ApiController]
     public class WeatherForecastController : ControllerBase
     {

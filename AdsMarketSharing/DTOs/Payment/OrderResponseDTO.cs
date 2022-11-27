@@ -14,9 +14,10 @@ namespace AdsMarketSharing.DTOs.Payment
         public decimal Total { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ExpireTime { get; set; }
-        public OrderStatus OrderStatus { get; set; } = OrderStatus.Pending;
+        public string OrderStatus { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; }
+        public string ProductImage { get; set; }
         public int MerchantId { get; set; }
         public string Merchant { get; set; }
         public int AddressId { get; set; }

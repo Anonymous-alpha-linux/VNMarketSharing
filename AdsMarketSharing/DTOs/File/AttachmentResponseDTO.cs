@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace AdsMarketSharing.DTOs.File
 {
@@ -16,5 +17,7 @@ namespace AdsMarketSharing.DTOs.File
         public string FileTag { get; set; }
         [Required]
         public float FileSize { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }

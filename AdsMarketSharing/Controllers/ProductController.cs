@@ -1,21 +1,27 @@
-﻿using AdsMarketSharing.Data;
+﻿
+using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
+using System.Security.Claims;
+
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+
+using AdsMarketSharing.Data;
 using AdsMarketSharing.Interfaces;
 using AdsMarketSharing.DTOs.Product;
 using AdsMarketSharing.Entities;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Collections.Generic;
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using System.Security.Claims;
 using AdsMarketSharing.DTOs.File;
-using Microsoft.AspNetCore.Http;
 using AdsMarketSharing.DTOs;
 using AdsMarketSharing.DTOs.Payment;
 using AdsMarketSharing.DTOs.Review;
+using AdsMarketSharing.Models;
+using AdsMarketSharing.Services.Payment;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -36,42 +42,50 @@ namespace AdsMarketSharing.Controllers
             _mapper = mapper;
             _fileStorageService = fileStorageService;
         }
-
-        // 1. Product
         
         [HttpGet("")]
         public async Task<IActionResult> GetProductList([FromQuery]FilterProductRequestDTO filterProductRequestDTO)
         {
-            var productLstQuery = _dbContext.Products
-                .AsNoTracking()
-                .OrderBy(p => p.Name)
-                .Include(p => p.UserPage)
-                .Include(p => p.ProductCategories)
-                    .ThenInclude(pc => pc.Category)
-                .Include(p => p.ProductClassifies)
-                    .ThenInclude(pc => pc.ProductClassifyTypes)
-                .Include(p => p.Attachments)
-                .AsQueryable();
-
-            int productMax = countfilterProductList(_dbContext.Products, filterProductRequestDTO);
-
-
-            productLstQuery = filterProductList(productLstQuery,filterProductRequestDTO);
-
-            var result = await productLstQuery
-                .ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider)
-                .ToListAsync();
-
-            if(result is null)
+            try
             {
-                return NotFound("Not found the matches");
+                var productLstQuery = _dbContext.Products
+                    .AsNoTracking()
+                    .OrderByDescending(p => p.Orders.Count)
+                    .OrderBy(p => p.Name)
+                    .Include(p => p.Orders)
+                    .Include(p => p.UserPage)
+                    .Include(p => p.ProductCategories)
+                        .ThenInclude(pc => pc.Category)
+                    .Include(p => p.ProductClassifies)
+                        .ThenInclude(pc => pc.ProductClassifyTypes)
+                    .Include(p => p.Attachments)
+                        .ThenInclude(p => p.Attachment)
+                    .AsQueryable();
+
+                int productMax = countfilterProductList(_dbContext.Products, filterProductRequestDTO);
+
+
+                productLstQuery = filterProductList(productLstQuery,filterProductRequestDTO);
+
+                if(!productLstQuery.Any())
+                {    
+                    return NotFound("Not found the matches");   
+                }
+
+                var result = productLstQuery
+                    .ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider)
+                    .ToList();
+
+                return Ok(new GetProductListWithCount()
+                {
+                    ProductList = result,
+                    Amount = productMax
+                });
             }
-
-            return Ok(new GetProductListWithCount()
+            catch (System.Exception e)
             {
-                ProductList = result,
-                Amount = productMax
-            });
+                return BadRequest(e);
+            }
         }
 
         [HttpGet("{id:int}")]
@@ -87,7 +101,8 @@ namespace AdsMarketSharing.Controllers
                     .ThenInclude(p => p.Category)
                 .Include(p => p.ProductClassifies)
                     .ThenInclude(pc => pc.ProductClassifyTypes)
-                .Include(p => p.Attachments);
+                .Include(p => p.Attachments)
+                    .ThenInclude(p => p.Attachment);
 
             if(product is null)
             {
@@ -125,6 +140,7 @@ namespace AdsMarketSharing.Controllers
                 .Include(p => p.ProductClassifies)
                     .ThenInclude(pc => pc.ProductClassifyTypes)
                 .Include(p => p.Attachments)
+                    .ThenInclude(p => p.Attachment)
                 .Where(p => p.UserPageId == userPage.Id)
                 .AsQueryable();
 
@@ -142,76 +158,181 @@ namespace AdsMarketSharing.Controllers
         {
             string usernameStr = HttpContext.User.Claims.SingleOrDefault(claim => claim.Type == ClaimTypes.Email).Value;
 
-            return files.Select((file) => {
-                if(file == null)
+            var result = new List<AttachmentResponseDTO>();
+            List<AttachmentResponseDTO> responseDTOs = null;
+
+            if (files == null) throw new System.Exception("Your files list is null");
+
+            var tasks = new List<Task<ServiceResponse<AttachmentResponseDTO>>>();
+            try
+            {
+                foreach (var file in files)
                 {
-                    return null;
+                    if (file != null)
+                    {
+                        
+                        var task = _fileStorageService.CreateFolderAndSaveImage(file.FileName, file.OpenReadStream(), usernameStr);
+                        tasks.Add(task);
+                    }
                 }
-                return _fileStorageService.CreateFolderAndSaveImage(file.FileName, file.OpenReadStream(), usernameStr).Result.Data;
-            }).ToList();
+             
+                var response = await Task.WhenAll(tasks.ToArray());
+                responseDTOs = response.Select(p => p.Data).ToList();
+                return responseDTOs;
+            }
+            catch (System.Exception)
+            {
+                return responseDTOs;
+            }
+        }
+
+        [Authorize]
+        [HttpGet("recent")]
+        public async Task<IActionResult> GetRecentProduct([FromQuery] int amount)
+        {
+            var query = _dbContext.Products
+                .OrderBy(p => p.CreatedAt)
+                .Skip(amount)
+                .AsQueryable();
+
+            return Ok(new
+            {
+                recentProducts = query.ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider).ToList()
+            });
+        }
+
+        [Authorize]
+        [HttpGet("out")]
+        public async Task<IActionResult> GetOutProducts([FromQuery] int amount)
+        {
+            var query = _dbContext.Products
+                .OrderBy(p => p.CreatedAt)
+                .Skip(amount)
+                .AsQueryable();
+
+            return Ok(new
+            {
+                outProducts = query.ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider).ToList()
+            });
+        }
+
+        [Authorize]
+        [HttpGet("uninspected")]
+        public async Task<IActionResult> GetUnInspectedAcceptedProduct()
+        {
+            var productList = _dbContext.Products.OrderBy(p => !p.HasAccepted ? 0 : 1);
+
+            var result = productList.ProjectTo<GetProductResponseDTO>(_mapper.ConfigurationProvider).ToList();
+
+            return Ok(result);
         }
 
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateNewProduct([FromForm]AddProductRequestDTO request)
         {
-            // 1. Handle IFormFile
-            request.Attachments = await CreateFolderAndSaveImage(request.Files);
-
-
-            // 2. Proper the product details
-            var detailImageLst = request.ProductDetails.Select(d => d.Image).Where(image => image != null).ToList();
-            var attachments = await CreateFolderAndSaveImage(detailImageLst);
-            
-            request.ProductDetails = request.ProductDetails.Select((d, index) =>
-            {
-                d.PresentImage = attachments.ElementAtOrDefault(index);
-                return d;
-
-            }).ToList();
-
-            // 2. Upload product
-            var product = _mapper.Map<Product>(request);
-            var classifyTypes = product.ProductClassifies.Select(pc => pc.ProductClassifyTypes).ToArray();
-
-            // 3. Assign classify detail
-            List<ProductClassfiyDetail> classifyDetail = null;
-            if (classifyTypes != null)
-            {
-                 classifyDetail = request.ProductDetails
-                    .AsQueryable()
-                    .Select(pd => new ProductClassfiyDetail()
-                    {
-                        Price = pd.Price,
-                        Inventory = pd.Inventory,
-                        PresentImage = _mapper.Map<Attachment>(pd.PresentImage),
-                        ClassifyTypeKey = classifyTypes.ElementAtOrDefault(0).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(0)),
-                        ClassifyTypeValue = classifyTypes.ElementAtOrDefault(1) != null ? classifyTypes.ElementAtOrDefault(1).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(1)): null,
-                    })
-                    .ToList();
-            }
-            
             try
             {
+                // 1. Convert DTO to Product
+                var product = _mapper.Map<Product>(request);
+                var classifyTypes = product.ProductClassifies.Select(pc => pc.ProductClassifyTypes).ToArray();
+
+                // 1.1. Add Product to database
+                _dbContext.Products.Add(product);
+
+                // 1.2. Add Classify Details to database
+                List<ProductClassfiyDetail> classifyDetails = null;
+                if (classifyTypes != null)
+                {
+                    classifyDetails = request.ProductDetails
+                        .AsQueryable()
+                        .Select(pd => new ProductClassfiyDetail()
+                        {
+                            Price = pd.Price,
+                            Inventory = pd.Inventory,
+                            PresentImage = _mapper.Map<Attachment>(pd.PresentImage),
+                            ClassifyTypeKey = classifyTypes.ElementAtOrDefault(0).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(0)),
+                            ClassifyTypeValue = classifyTypes.ElementAtOrDefault(1) != null ? classifyTypes.ElementAtOrDefault(1).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(1)): null,
+                        })
+                        .ToList();
+                }
+
+                // 1.3. Catch don't have categories
                 if (product.ProductCategories is null)
                 {
                     return NotFound("Cannot find your categories");
                 }
 
-                _dbContext.Add(product);
-                if(classifyDetail != null)
+                // 2.   Execute the list of long-running tasks
+                var tasks = new List<Task<List<AttachmentResponseDTO>>>();
+               
+                // 2.1. Add task of images
+                if (request.Files != null)
                 {
-                    _dbContext.AddRange(classifyDetail);
+                    var task = CreateFolderAndSaveImage(request.Files);
+
+                    tasks.Add(task);
+                };
+
+                // 2.2. Add task of product type detail images
+                if (request.ProductDetails != null)
+                {
+                    var detailImageLst = request.ProductDetails.Select(d => d.Image).ToList();
+
+                    var task = CreateFolderAndSaveImage(detailImageLst.Where(image => image != null).ToList());
+
+                    tasks.Add(task);
                 }
-                _dbContext.SaveChanges();
-                return StatusCode(201, "created");
+
+
+                // 3.  Implement each task of list
+                var responses = await Task.WhenAll(tasks).ConfigureAwait(false);
+
+                // 3.1.Handle the product images
+                if (responses.ElementAt(0) != null)
+                {
+                    var attachments = responses.ElementAtOrDefault(0)
+                                        .AsQueryable()
+                                        .ProjectTo<Attachment>(_mapper.ConfigurationProvider)
+                                        .ToList();
+                    _dbContext.ProductAttachments.AddRange(attachments.Select(p => new ProductAttachment()
+                    {
+                        Product = product,
+                        Attachment = p
+                    }));
+                }
+                // 3.2.Handle the product classify detail image
+                if(classifyDetails != null && responses.ElementAt(1) != null && responses.ElementAt(1).Count > 0)
+                {
+                    var attachments = responses.ElementAtOrDefault(1)
+                                        .AsQueryable()
+                                        .ProjectTo<Attachment>(_mapper.ConfigurationProvider)
+                                        .ToList();
+
+                    classifyDetails = classifyDetails.Select((p,index) =>
+                    {
+                        int position = request.ProductDetails.ElementAt(index).ClassifyIndexes[0];
+                        var _presentImage = attachments.ElementAtOrDefault(position);
+                        p.PresentImage = _presentImage != null ? _presentImage : attachments.ElementAt(0);
+                        return p;
+                    }).ToList();
+                }
+
+                _dbContext.ProductClassfiyDetails.AddRange(classifyDetails);
+                _dbContext.SaveChanges();   
+
+                return StatusCode(200, new
+                {
+                    Message = "Added new product",
+                    NewProductId = product.Id
+                });
             }
             catch (System.Exception e)
             {
                 return StatusCode(500,e.Message);
             }
         }
-        
+
         [Authorize]
         [HttpPost("uploadFiles")]
         public async Task<ActionResult<List<AttachmentResponseDTO>>> UploadImages(IFormFile[] formFiles)
@@ -242,6 +363,7 @@ namespace AdsMarketSharing.Controllers
             return Ok(attachmentResList);
         }
 
+        [Authorize]
         [HttpPut("update")]
         public async Task<IActionResult> UpdateProduct([FromForm]AddProductRequestDTO request,[FromQuery] int id)
         {
@@ -268,6 +390,71 @@ namespace AdsMarketSharing.Controllers
             {   
                 return StatusCode(500, "Server Exception");
             }
+        }
+
+        [Authorize]
+        [HttpPut("permission")]
+        public async Task<IActionResult> InspectPermission([FromQuery] bool isAccepted, [FromQuery] int productId)
+        {
+            var _upchecked = _dbContext.Products.FirstOrDefault(p => p.Id == productId);
+            _upchecked.HasAccepted = isAccepted;
+            _dbContext.SaveChanges();
+
+            return Ok(new
+            {
+                Message = isAccepted ? "The product has been accepted" : "The product has been denied",
+                ProductId = _upchecked.Id
+            });
+        }
+
+        [Authorize]
+        [HttpPut("permission/deliver")]
+        public async Task<IActionResult> DeliverPermisiion([FromQuery] int status, [FromQuery] int orderId)
+        {
+            var _upchecked = _dbContext.Orders.FirstOrDefault(p => p.Id == orderId);    
+            if (_upchecked == null) {
+                return NotFound(new { Message = "Cannot found your order" });
+            }
+            OrderStatus _orderStatus = (OrderStatus) status;
+            _upchecked.OrderStatus = _orderStatus;
+            string message = null;
+            switch (_orderStatus)
+            {
+                case OrderStatus.Pending:
+                    message = OrderScriptMessage.PendingMessage;
+                    break;
+                case OrderStatus.Waiting:
+                    message = OrderScriptMessage.WaitingMessage;
+                    break;
+                case OrderStatus.Delivering:
+                    message = OrderScriptMessage.DeliveringMessage;
+                    break;
+                case OrderStatus.Delivered:
+                    message = OrderScriptMessage.DeliveredMessage;
+                    break;
+                case OrderStatus.Completed:
+                    message = OrderScriptMessage.CompletedMessage;
+                    break;
+                case OrderStatus.Cancelled:
+                    message = OrderScriptMessage.CancelledMessage;
+                    break;
+                case OrderStatus.CustomerNotReceived:
+                    message = OrderScriptMessage.CustomerNotReceivedMessage;
+                    break;
+                case OrderStatus.SellerDenied:
+                    message = OrderScriptMessage.SellerDeniedMessage;
+                    break;
+                default:
+                    message = "There're no option for this trigger";
+                    break;
+            }
+            _dbContext.SaveChanges();
+
+            return Ok(new
+            {
+                Message =  message,
+                ProductId = _upchecked.Id
+            });
         }
 
         [Authorize]
@@ -363,36 +550,26 @@ namespace AdsMarketSharing.Controllers
         {
             try
             {
-                if(request.ParentCategoryId != null)
+                if(_dbContext.Categories.Any(p => p.Name == request.Name))
                 {
-                    var foundCategory = await _unitOfWork.CategoryRepository.GetById(request.ParentCategoryId ?? -1);
-                    if(foundCategory != null)
-                    {
-                        request.Level = foundCategory.Level + 1;
-                    }
-                    else
-                    {
-                        request.ParentCategoryId = null;
-                    }
+                    return BadRequest("Your category has been existed");
                 }
+
+                var foundParentCategory = _dbContext.Categories.FirstOrDefault(p => p.Id == request.ParentCategoryId);
+
+                request.ParentCategoryId = foundParentCategory?.Id;
+                request.Level = foundParentCategory?.Level != null ? foundParentCategory.Level + 1 : 0;
 
                 var category = _mapper.Map<AddCategoryRequestDTO, Category>(request);
+               
+                var newCategory = _dbContext.Categories.Add(category);
 
-                var newCategory = await _unitOfWork.CategoryRepository.Add(category);
-
-                await _unitOfWork.CompleteAsync();
-
-
-                if (newCategory is null)
-                {
-                    return StatusCode(500,"Cannot add now in server side");
-                }
-
-                return Ok(newCategory);
+                _dbContext.SaveChanges();
+                return Ok(_mapper.Map<GetCategoryResponseDTO>(category));
             }
             catch (System.Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500 ,ex.Message);
             }
         }
 
@@ -400,13 +577,30 @@ namespace AdsMarketSharing.Controllers
         [HttpPut("category")]
         public async Task<IActionResult> UpdateSingleCategory([FromQuery]int id, [FromBody] UpdateCategoryRequestDTO request)
         {
-            try
-            {
-                var foundRecord = await _unitOfWork.CategoryRepository.GetById(id);
-                var newCategory = await _unitOfWork.CategoryRepository.Update(id, _mapper.Map(request,foundRecord));
-                await _unitOfWork.CompleteAsync();
+            try {
+                if (_dbContext.Categories.Any(p => p.Name == request.Name))
+                {
+                    return BadRequest("Your category has been existed");
+                }
 
-                return Ok(newCategory);
+                var foundCategory = _dbContext.Categories
+                                        .FirstOrDefault(p => p.Id == id);
+
+                if(foundCategory.ParentCategoryId != request.ParentCategoryId)
+                {
+                    var foundParentCategory = _dbContext.Categories
+                                                .FirstOrDefault(p => p.Id == request.ParentCategoryId);
+                
+                    request.Level = foundParentCategory?.Level != null ? foundParentCategory.Level + 1 : foundCategory.Level;
+                }
+
+                var updatedCategory = _mapper.Map(request, foundCategory);
+
+                var newCategory = _dbContext.Categories.Update(updatedCategory);
+
+                _dbContext.SaveChanges();
+
+                return Ok(_mapper.Map<GetCategoryResponseDTO>(updatedCategory));
             }
             catch (System.Exception ex)
             {
@@ -420,13 +614,17 @@ namespace AdsMarketSharing.Controllers
         {
             try
             {
+                if(!_dbContext.Categories.Any(p => p.Id == id))
+                {
+                    return BadRequest("This item currently not exist");
+                }
                 await _unitOfWork.CategoryRepository.Delete(id);
                 await _unitOfWork.CompleteAsync();
                 return Ok("Deleted Item");
             }
             catch (System.Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500 ,ex.Message);
             }
         }
 

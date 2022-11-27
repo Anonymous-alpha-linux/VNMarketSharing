@@ -25,6 +25,8 @@ using AdsMarketSharing.Entities;
 
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace AdsMarketSharing
 {
@@ -41,7 +43,9 @@ namespace AdsMarketSharing
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddOptions();
-            services.AddDbContext<SQLExpressContext>(x => x.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<SQLExpressContext>(x => {
+                x.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+            });
 
             //services.AddIdentity().AddEntityFrameworkStores<SQLExpressContext>();
             services.AddControllers().AddNewtonsoftJson(options =>
@@ -64,7 +68,6 @@ namespace AdsMarketSharing
                     builder.AllowCredentials();
                     builder.AllowAnyMethod();
                 });
- 
             });
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -130,7 +133,15 @@ namespace AdsMarketSharing
                             return Task.CompletedTask;   
                         }
                     };
-                });       
+                });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "Administrator"));
+                
+                options.AddPolicy("SellerOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "Merchant", "Administrator"));
+            });
+    
             services.AddHttpContextAccessor();
             // Singleton Service
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -164,8 +175,9 @@ namespace AdsMarketSharing
             app.UseForwardedHeaders(new ForwardedHeadersOptions() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All });
             app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseAuthentication();
             app.UseCors("AllowAPIRequestIO");
+            app.UseAuthentication();
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

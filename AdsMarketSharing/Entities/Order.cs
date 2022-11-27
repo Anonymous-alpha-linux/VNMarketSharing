@@ -16,10 +16,11 @@ namespace AdsMarketSharing.Entities
         public int Amount { get; set; }
         public decimal Price { get; set; }
         public decimal Total { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime ExpireTime { get; set; } = DateTime.UtcNow.AddDays(1);
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime ExpireTime { get; set; } = DateTime.Now.AddDays(1);
         public OrderStatus OrderStatus { get; set; } = OrderStatus.Pending;
         public OrderType Type { get; set; } = OrderType.TOPUP;
+        public string ProductImage { get; set; }
 
         [ForeignKey(nameof(Product))]
         public int ProductId { get; set; }

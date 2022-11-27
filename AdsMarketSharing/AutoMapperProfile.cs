@@ -21,6 +21,11 @@ namespace AdsMarketSharing
             CreateMap<Account, GetAccountInfoDTO>();
             CreateMap<AssignRoleToAccountDTO, AccountRole>();
 
+
+            //Role
+            CreateMap<Role, GetRoleDTO>()
+                .ForMember(dto=>dto.RoleName, ent => ent.MapFrom(p => p.Name));
+
             // Attachment
             CreateMap<AttachmentResponseDTO, Attachment>();
 
@@ -35,6 +40,16 @@ namespace AdsMarketSharing
                     ent.AllowNull();
                     ent.MapFrom(p => p.AttachmentId > 0 ? p.Avatar.PublicPath : defaultAvatar);
                 });
+            CreateMap<User, GetUserByAdminDTO>()
+                .ForMember(dto => dto.Avatar, ent => ent.MapFrom(p => p.Avatar.PublicPath))
+                .ForMember(dto => dto.Email, ent => ent.MapFrom(p => p.Account.Email))
+                .ForMember(dto => dto.Enabled, ent => ent.MapFrom(p => p.Account.Enabled))
+                .ForMember(dto => dto.IsActive, ent => ent.MapFrom(p => p.Account.IsActive))
+                .ForMember(dto => dto.RegisteredTime, ent => ent.MapFrom(p => p.Account.RegisteredTime))
+                .ForMember(dto => dto.UpdatedTime, ent => ent.MapFrom(p => p.Account.UpdatedTime));
+            CreateMap<RegisterAccountWithUserDTO, User>()
+                .ForMember(dto => dto.Avatar, ent => ent.MapFrom(p => p.Avatar))
+                .ForMember(dto => dto.Account, ent => ent.MapFrom(p => p.Account));
 
             // Address
             CreateMap<AddAddressRequestDTO, ReceiverAddress>();
@@ -42,7 +57,13 @@ namespace AdsMarketSharing
 
             // Product
             CreateMap<AddProductRequestDTO, Product>()
+                .ForMember(ent => ent.Attachments, dto =>
+                {
+                    dto.AllowNull();
+                    dto.MapFrom(p => p.Attachments.Select(p => new AddProductAttachmentRequestDTO() { Attachment = p }));
+                })
                 .ForMember(ent => ent.ProductCategories, dto => dto.MapFrom(p => p.CategoryIds.Select(id => new ProductCategory() { CategoryId = id })));
+                
                 //.ForMember(ent => ent.ProductClassifies.SelectMany(pc => pc.ProductClassifyTypes)
                 //        , dto => dto.MapFrom(p => p.ProductDetails
                 //            .Select(pd => new AddProductClassifyDetailRequestDTO()
@@ -65,24 +86,32 @@ namespace AdsMarketSharing
             CreateMap<AssignCategoryToProductDTO, ProductCategory>();
             CreateMap<Product, GetProductResponseDTO>()
                 .ForMember(dto => dto.ProductCategories, ent => ent.MapFrom(p => p.ProductCategories.OrderBy(pc => pc.Category.Level).Select(pc => pc.Category)))
-                .ForMember(dto => dto.Urls, ent => ent.MapFrom(p => p.Attachments.Select(a => a.PublicPath)))
+                .ForMember(dto => dto.Urls, ent => ent.MapFrom(p => p.Attachments.Select(a => a.Attachment.PublicPath)))
                 .ForMember(dto => dto.ProductDetails, ent => ent.MapFrom(p => p.ProductClassifies
                     .SelectMany(pc => pc.ProductClassifyTypes
                         .Where(type => type.ProductClassifyValues.Count != 0)
                             .SelectMany(type => type.ProductClassifyValues)
                 )))
                 .ForMember(dto => dto.ReviewAmount, ent => ent.MapFrom(p => p.Reviews.Count));
+            CreateMap<Product, RecentProductResponseDTO>()
+                .ForMember(dto => dto.ProductName, ent => ent.MapFrom(p => p.Name))
+                .ForMember(dto => dto.ProductImage, ent => ent.MapFrom(p => p.Attachments[0].Attachment.PublicPath))
+                .ForMember(dto => dto.SellerName, ent => ent.MapFrom(p => p.UserPage.Name))
+                .ForMember(dto => dto.SellerAvatar, ent => ent.MapFrom(p => p.UserPage.PageAvatar.PublicPath))
+                .ForMember(dto => dto.OrderAmount, ent => ent.MapFrom(p => (long)p.Orders.Count));
 
+            // ProductAttachment
+            CreateMap<AddProductAttachmentRequestDTO, ProductAttachment>()
+                .ForMember(ent => ent.Product, dto => dto.MapFrom(p => p.Product))
+                .ForMember(ent => ent.Attachment, dto => dto.MapFrom(p => p.Attachment));
             // Classify
             CreateMap<AddProductClassifyRequestDTO, ProductClassify>()
                 .ForMember(ent => ent.ProductClassifyTypes, 
                     dto => dto.MapFrom(prop => prop.ClassifyTypes.Select(type => new ProductClassifyType()
                     {
-                        Name = prop.Name
+                        Name = type
                     })
                 ));
-                //.ForMember(ent => ent.ProductClassifyTypes.Select(type => type.ProductClassifyValues), dto => dto.MapFrom(prop => ))
-                //.ForMember(ent => ent.ProductClassifyTypes.Select(type => type.ProductClassifyKeys), dto => dto.MapFrom(prop => prop));
             CreateMap<ProductClassify, GetProductClassifyResponseDTO>()
                 .ForMember(dto => dto.ClassifyTypes, ent => ent.MapFrom(prop => prop.ProductClassifyTypes));
                
@@ -118,12 +147,10 @@ namespace AdsMarketSharing
                 .ForMember(dto => dto.PageAvatar, ent => ent.MapFrom(up => up.PageAvatar != null ? up.PageAvatar.PublicPath : defaultAvatar));
 
 
-            // Payment
+            // Invoice Payment 
             CreateMap<InvoiceCreationDTO, Invoice>()
                 .ForMember(ent => ent.CashAmount, dto => dto.MapFrom(p => p.Orders.Sum(p => p.Total)));
             
-            CreateMap<OrderCreationDTO, Order>();
-
             CreateMap<PaymentCreationDTO, Payment>()
                 .ForMember(ent => ent.Last4Digits, dto=> dto.MapFrom(p => p.CardNumber.Substring(p.CardNumber.Length - 5, 4)));
 
@@ -131,11 +158,20 @@ namespace AdsMarketSharing
                 //.ForMember(dto => dto.Shipping, ent => ent.MapFrom(p => p.Shipping.ToString()))
                 .ForMember(dto => dto.Bank, ent => ent.MapFrom(p => p.Payment.BankCode.ToString()));
 
+            // Order
+
+            CreateMap<OrderCreationDTO, Order>();
+
             CreateMap<Order, OrderResponseDTO>()
                 .ForMember(dto => dto.ProductName, ent => ent.MapFrom(p => p.Product.Name))
                 .ForMember(dto => dto.Merchant, ent => ent.MapFrom(p => p.Merchant.Name))
                 .ForMember(dto => dto.Address, ent => ent.MapFrom(p => $"{p.BuyerFullName} - {p.Address.StreetAddress} - {p.Address.Ward} - {p.Address.District} - {p.Address.City}"))
                 .ForMember(dto => dto.InvoiceRef, ent => ent.MapFrom(p => p.Invoice.OnlineRef));
+                //.ForMember(dto => dto.ProductImage, ent =>
+                //{
+                //    ent.AllowNull();
+                //    ent.MapFrom(p => p.Product != null && p.Product.Attachments != null && p.Product.Attachments.ElementAt(0).Attachment != null ? p.Product.Attachments.ElementAt(0).Attachment.PublicPath : defaultAvatar);
+                //});;
 
 
             // Review

@@ -17,6 +17,8 @@ using AdsMarketSharing.Models.Token;
 using AdsMarketSharing.DTOs.Token;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Cors;
+using AdsMarketSharing.DTOs.User;
+using Microsoft.EntityFrameworkCore;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -39,14 +41,14 @@ namespace AdsMarketSharing.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterNewAccountDTO addAccountInfoDTO,string returnUrl)
+        public async Task<IActionResult> Register([FromForm] RegisterAccountWithUserDTO addAccountInfoDTO,string returnUrl)
         {
             if(!ModelState.IsValid) {
                 return BadRequest("Please fulfill your field");
             }
 
             // 1. Register new account
-            var registerResponse = await _authenticationService.Register(addAccountInfoDTO);
+            var registerResponse = await _authenticationService.RegisterWithUserInfo(addAccountInfoDTO);
             if(registerResponse.Status != ResponseStatus.Successed)
             {
                 return StatusCode(registerResponse.StatusCode, registerResponse);
@@ -62,7 +64,11 @@ namespace AdsMarketSharing.Controllers
                 TokenData = TokenType.EmailConfirm.ToString()
             };
             var token = _tokenService.GenerateMailToken(claims,tokenConfig);
-            var requestOrigin = Request.Headers["Origin"].ToString();
+            var requestOrigin = String.IsNullOrEmpty(Request.Headers["Origin"].ToString()) ?
+                $"https://{Request.Host.Value}/api/auth/confirmEmail?userId={registerResponse.Data.AccountId}&token={token}&returnURL={returnUrl}"
+                : 
+                $"{Request.Headers["Origin"].ToString()}/{String.Join("/", Uri.UnescapeDataString(returnUrl).Split('/').Where(w => !String.IsNullOrEmpty(w)))}?userId={registerResponse.Data.AccountId}&token={token}&returnURL={returnUrl}";
+            
             var emailSendingResponse = await _mailService.SendGmailAsync(new MailContent
             {
                 DisplayName = "Ads Service Sharing Admin.",
@@ -72,7 +78,7 @@ namespace AdsMarketSharing.Controllers
                 Body = "Thanks",
                 HtmlBody = $"<h1>Thanks for becomming our member</h1>" +
                 $"<p>All steps are completed:<span>" +
-                $"<a href=\"{requestOrigin}/auth/confirmEmail/redirect?userId={registerResponse.Data.AccountId}&token={token}&returnURL={returnUrl}\">\"Activate your account\"</a>" +
+                $"<a href=\"{requestOrigin}\">\"Activate your account\"</a>" +
                 $"</span> to confirm your email</p>"
             });
             if (emailSendingResponse.Status != ResponseStatus.Successed) 
@@ -101,7 +107,10 @@ namespace AdsMarketSharing.Controllers
                     TokenData = TokenType.EmailConfirm.ToString()
                 };
                 var token = _tokenService.GenerateMailToken(claims, tokenConfig);
-                var requestOrigin = Request.Headers["Origin"].ToString();
+                var requestOrigin = String.IsNullOrEmpty(Request.Headers["Origin"].ToString()) ?
+                    $"https://{Request.Host.Value}/api/auth/confirmEmail?userId={loginResponse.Data.AccountId}&token={token}&returnURL={returnURL}"
+                    :
+                    $"{Request.Headers["Origin"].ToString()}/{String.Join("/", Uri.UnescapeDataString(returnURL).Split('/').Where(w => !String.IsNullOrEmpty(w)))}?userId={loginResponse.Data.AccountId}&token={token}&returnURL={returnURL}";
                 var emailSendingResponse = await _mailService.SendGmailAsync(new MailContent
                 {
                     DisplayName = "Ads Service Sharing Admin.",
@@ -111,18 +120,15 @@ namespace AdsMarketSharing.Controllers
                     Body = "Thanks",
                     HtmlBody = $"<h1>Thanks for becomming our member</h1>" +
                     $"<p>All steps are completed:<span>" +
-                    $"<a href=\"{requestOrigin}/auth/confirmEmail/redirect?userId={loginResponse.Data.AccountId}&token={token}&returnURL={returnURL}\">\"Activate your account\"</a>" +
+                    $"<a href=\"{requestOrigin}\">\"Activate your account\"</a>" +
                     $"</span> to confirm your email</p>",
                 });
                 if (emailSendingResponse.Status != ResponseStatus.Successed)
                 {
                     return StatusCode(emailSendingResponse.StatusCode, emailSendingResponse);
                 }
-                if(emailSendingResponse.Status == ResponseStatus.Successed)
-                {
-                    emailSendingResponse.Message = "Please check your email to confirm account";
-                    return StatusCode(emailSendingResponse.StatusCode, emailSendingResponse);
-                }
+                emailSendingResponse.Message = "Please check your email to confirm account";
+                return StatusCode(loginResponse.StatusCode, emailSendingResponse);
             }    
             
             return StatusCode(loginResponse.StatusCode, loginResponse);
@@ -142,6 +148,7 @@ namespace AdsMarketSharing.Controllers
         {
             var host = Request.Host;
             var response = await _authenticationService.GetUser();
+
             return StatusCode(response.StatusCode, response);
         }
 
@@ -169,7 +176,7 @@ namespace AdsMarketSharing.Controllers
         }
 
         [HttpPost("confirm/changePassword")]
-        public async Task<IActionResult> SendEmailToChangePassword(string email,string returnUrl)
+        public async Task<IActionResult> SendEmailToChangePassword(string email,string returnURL)
         {
             // 1. Get User Response
             var getUserResponse = await _authenticationService.GetUserByEmail(email);
@@ -190,7 +197,10 @@ namespace AdsMarketSharing.Controllers
                 TokenData = TokenType.ChangePassword.ToString()
             };
             var token = _tokenService.GenerateMailToken(claims, tokenConfig);
-            var requestOrigin = Request.Headers["Origin"].ToString();
+            var requestOrigin = String.IsNullOrEmpty(Request.Headers["Origin"].ToString()) ?
+                $"{Request.Host.Value}/api/auth/changePassword?email={getUserResponse.Data.Email}&returnURL={returnURL}&token={token}"
+                :
+                $"{Request.Headers["Origin"].ToString()}/{String.Join("/", Uri.UnescapeDataString(returnURL).Split('/').Where(w => !String.IsNullOrEmpty(w)))}?email={getUserResponse.Data.Email}&returnURL={returnURL}&token={token}";
             var emailSendingResponse = await _mailService.SendGmailAsync(new MailContent
             {
                 DisplayName = "Ads Service Sharing Admin.",
@@ -200,7 +210,7 @@ namespace AdsMarketSharing.Controllers
                 Body = "Thanks",
                 HtmlBody = $"<h1>Thank for using our service</h1>" +
                 $"<h3>Click on button to change your password</h3><br/>" +
-                $"<a href=\"{requestOrigin}/auth/changePassword?email={getUserResponse.Data.Email}&returnURL={returnUrl}&token={token}\"><button style=\"color:green\">Click here</button></a>"
+                $"<a href=\"{requestOrigin}\"><button style=\"color:green\">Click here</button></a>"
             });
             if (emailSendingResponse.Status != ResponseStatus.Successed)
             {
@@ -211,7 +221,7 @@ namespace AdsMarketSharing.Controllers
                 Token = token,
                 RequestOrigin = requestOrigin,
                 Email = getUserResponse.Data.Email,
-                ReturnUrl = returnUrl
+                ReturnUrl = returnURL
             });;
         }
 

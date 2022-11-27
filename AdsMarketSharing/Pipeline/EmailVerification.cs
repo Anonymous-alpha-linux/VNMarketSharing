@@ -18,11 +18,5 @@ namespace AdsMarketSharing.Pipeline
             _next = next;
         }
 
-        // Pipeline stage:
-        //public Task ConfirmEmail(HttpContext context)
-        //{
-        //    return;
-        //}
-
     }
 }

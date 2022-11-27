@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdsMarketSharing.Enum;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -27,13 +28,15 @@ namespace AdsMarketSharing.Entities
             }
         }
         public bool HasAccepted { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public bool HasDeleted { get; set; } = false;
+        public ProductStatus Status { get; set; } = ProductStatus.New;
         [ForeignKey(nameof(UserPage))]
         public int UserPageId { get; set; }
         public UserPage UserPage { get; set; }
         public List<ProductCategory> ProductCategories { get; set; }
-        public List<Attachment> Attachments { get; set; }
+        public List<ProductAttachment> Attachments { get; set; }
         public List<ProductClassify> ProductClassifies { get; set; }
         public List<Order> Orders { get; set; }
         public List<Review> Reviews { get; set; }
