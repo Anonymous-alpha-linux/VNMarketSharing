@@ -43,7 +43,10 @@ namespace AdsMarketSharing.Controllers
                     .Include(up => up.BannerUrl)
                     .Include(up => up.PageAvatar)
                     .FirstOrDefault(p => p.UserId == userId);
-
+                if(foundUserPage == null)
+                {
+                    return NotFound();
+                }    
                 var result = _mapper.Map<GetUserPageResponseDTO>(foundUserPage);
                 return Ok(result);
             }
