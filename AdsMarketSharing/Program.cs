@@ -24,6 +24,14 @@ namespace AdsMarketSharing
                     logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
                     logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
                 })
+                //.ConfigureAppConfiguration((hostingContext, config) =>
+                //{
+                //    var settings = config.Build();
+                //    config.AddAzureAppConfiguration(options =>
+                //    {
+
+                //    })
+                //})
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
