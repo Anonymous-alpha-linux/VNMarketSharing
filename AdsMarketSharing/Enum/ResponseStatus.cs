@@ -13,5 +13,6 @@ namespace AdsMarketSharing.Enum
         NonExpiredAccessToken,
         ExpiredRefreshToken,
         NotAcceptableToken,
+        Nothing,
     }
 }

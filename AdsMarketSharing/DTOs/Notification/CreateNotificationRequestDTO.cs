@@ -1,24 +1,17 @@
 ﻿using AdsMarketSharing.Enum;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AdsMarketSharing.Entities
+namespace AdsMarketSharing.DTOs.Notification
 {
-    public class Notification
+    public class CreateNotificationRequestDTO
     {
-        // Own Properties
-        public int Id { get; set; }
         public string Title { get; set; }
         public string ShortMessage { get; set; }
         public string Url { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public NotifyType Type { get; set; }
-
-        // Relationship
-        [ForeignKey(nameof(FromUser))]
         public int UserId { get; set; }
-        public User FromUser { get; set; }
-        public List<Notifytracker> Notifytrackers { get; set; }
+        public List<int> ToUsers { get; set; }
     }
 }

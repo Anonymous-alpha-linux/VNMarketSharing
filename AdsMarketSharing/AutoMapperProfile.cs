@@ -8,6 +8,7 @@ using AdsMarketSharing.DTOs.Product;
 using System.Linq;
 using AdsMarketSharing.DTOs.Payment;
 using AdsMarketSharing.DTOs.Review;
+using AdsMarketSharing.DTOs.Notification;
 
 namespace AdsMarketSharing
 {
@@ -182,6 +183,19 @@ namespace AdsMarketSharing
             //Reply
             CreateMap<ReplyReviewCreationDTO, Reply>();
             CreateMap<Reply, ReplyReviewResponseDTO>();
+
+            //Notification
+            CreateMap<CreateNotificationRequestDTO, Notification>()
+                .ForMember(ent => ent.Notifytrackers, dto => dto.MapFrom(p => p.ToUsers.Select(np => new CreateNotificationTrackerDTO()
+                {
+                    UserId = np,
+                    HasSeen = false
+                })));
+            CreateMap<CreateNotificationTrackerDTO, Notifytracker>();
+            CreateMap<Notification, NotificationResponseDTO>()
+                .ForMember(dto => dto.UserName, ent => ent.MapFrom(p => p.FromUser.OrganizationName));
+            CreateMap<Notifytracker, NotificationTrackerResponseDTO>()
+                .ForMember(dto => dto.Notification, ent => ent.MapFrom(p => p.Notification));
         }
     }
 }

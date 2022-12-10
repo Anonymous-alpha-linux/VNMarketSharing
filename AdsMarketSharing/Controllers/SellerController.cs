@@ -14,6 +14,8 @@ using AdsMarketSharing.DTOs.User;
 using Microsoft.EntityFrameworkCore;
 using AdsMarketSharing.DTOs.UserPage;
 using AutoMapper.QueryableExtensions;
+using AdsMarketSharing.DTOs.Payment;
+using AdsMarketSharing.Services.Payment;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -141,6 +143,19 @@ namespace AdsMarketSharing.Controllers
             var result = sellerList.ProjectTo<GetUserPageResponseDTO>(_mapper.ConfigurationProvider).ToList();
             return Ok(result);
         }
-
+        [HttpGet("order")]
+        public async Task<IActionResult> GetOrderList([FromQuery] int merchantId)
+        {
+            var orderList = _context.Orders.Where(p => p.MerchantId == merchantId).OrderBy(p => (p.OrderStatus == OrderStatus.Pending) ? 0 :
+                                            (p.OrderStatus == OrderStatus.Waiting) ? 1 :
+                                            (p.OrderStatus == OrderStatus.Delivering) ? 2 :
+                                            (p.OrderStatus == OrderStatus.Delivered) ? 3 :
+                                            (p.OrderStatus == OrderStatus.Completed) ? 4 :
+                                            (p.OrderStatus == OrderStatus.Cancelled) ? 5 :
+                                            (p.OrderStatus == OrderStatus.CustomerNotReceived) ? 6 :
+                                    7).AsQueryable();
+            var result = orderList.ProjectTo<OrderResponseDTO>(_mapper.ConfigurationProvider).ToList();
+            return Ok(result);
+        }
     }
 }

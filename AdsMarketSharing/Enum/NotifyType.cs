@@ -4,6 +4,7 @@
     {
         NewProduct,
         ReplyReview,
-        Review
+        Review,
+        InspectedProduct,
     }
 }

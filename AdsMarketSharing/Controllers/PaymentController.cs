@@ -194,7 +194,6 @@ namespace AdsMarketSharing.Controllers
         [HttpGet("order/seller")]
         public async Task<IActionResult> GetSellingOrder([FromQuery] OrderFilterRequestDTO filter)
         {
-            int integer = 0;
             var orders = _dbContext.UserPages
                             .Include(p => p.Orders)
                             .SelectMany(p => p.Orders)

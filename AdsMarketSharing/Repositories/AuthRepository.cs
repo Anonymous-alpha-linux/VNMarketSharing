@@ -234,22 +234,30 @@ namespace AdsMarketSharing.Repositories
                     throw new ServiceResponseException<ResponseStatus>(403, ResponseStatus.NoActivatedAccount, foundAccountRole.Account.Id, "Your account are not activated");
                 }
 
-                // 5. Defne the refresh token; 
+                // 5. Check if account is blocked
+                if (!foundAccountRole.Account.Enabled)
+                {
+                    throw new ServiceResponseException<ResponseStatus>(403, ResponseStatus.NoEnableAccount, foundAccountRole.Account.Id, "Your account are not enabled");
+                }
+
+                // 6. Defne the refresh token; 
                 // Mainly release the last oupt of response is token
                 var tokenResponse = await GenerateJWTToken(foundAccountRole.Account,foundAccountRole.Role, DateTime.UtcNow.AddHours(10),DateTime.UtcNow.AddDays(1));
                 if(tokenResponse.Status != ResponseStatus.Successed)
                 {
                     throw new ServiceResponseException<ResponseStatus>(tokenResponse.StatusCode, tokenResponse.Status, tokenResponse.ServerMessage);
                 }
+                
 
-                // 6. Settup cookie
+                // 7. Settup cookie
                 string cookieHost = _httpContext.HttpContext.Request.Host.Value;
 
                 _httpContext.HttpContext.Response.Cookies.Append("jwt", tokenResponse.Data.JWTToken, _cookieOptions);
                 _httpContext.HttpContext.Response.Cookies.Append("r_jwt", tokenResponse.Data.RefreshToken, _cookieOptions);
 
 
-                // 7. Define the response
+
+                // [Last]. Define the response
                 response.Data = new GetAccountInfoDTO()
                 {
                     AccountId = foundAccountRole.Account.Id,
