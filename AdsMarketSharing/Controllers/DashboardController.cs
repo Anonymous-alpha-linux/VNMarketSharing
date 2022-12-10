@@ -12,6 +12,11 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
+using OpenIddict.Abstractions;
+using AdsMarketSharing.Enum;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -64,6 +69,21 @@ namespace AdsMarketSharing.Controllers
         public async Task<IActionResult> GetRecentSellers()
         {
             return Ok();
+        }
+        [HttpGet("notifies")]
+        public async Task<IActionResult> GetNotificationList()
+        {
+            var userIdString = HttpContext.User.Claims.FirstOrDefault(type => type.Type == ClaimTypes.NameIdentifier).Value;
+            int.TryParse(userIdString, out var userId);
+            var query = _dbContext.Notifications.Where(p => p.UserId == userId);
+
+            var result = query.ToList();
+            return Ok(new
+            {
+                result = result,
+                amount =  result.Count,
+                max = _dbContext.Notifications.Count()
+            });
         }
     }
 }

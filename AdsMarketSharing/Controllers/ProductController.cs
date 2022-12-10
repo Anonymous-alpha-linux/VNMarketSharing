@@ -22,6 +22,9 @@ using AdsMarketSharing.DTOs.Payment;
 using AdsMarketSharing.DTOs.Review;
 using AdsMarketSharing.Models;
 using AdsMarketSharing.Services.Payment;
+using System.Linq.Dynamic.Core;
+using Microsoft.AspNetCore.SignalR;
+using AdsMarketSharing.Hubs;
 
 namespace AdsMarketSharing.Controllers
 {
@@ -31,16 +34,18 @@ namespace AdsMarketSharing.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IFileStorageService _fileStorageService;
+        private readonly IHubContext<NotifyHub> _notifyContext;
         private readonly SQLExpressContext _dbContext;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public ProductController(SQLExpressContext dbContext, IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService fileStorageService)
+        public ProductController(SQLExpressContext dbContext, IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService fileStorageService, IHubContext<NotifyHub> notifyContext)
         {
             _dbContext = dbContext;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _fileStorageService = fileStorageService;
+            _notifyContext = notifyContext;
         }
         
         [HttpGet("")]
@@ -60,6 +65,7 @@ namespace AdsMarketSharing.Controllers
                         .ThenInclude(pc => pc.ProductClassifyTypes)
                     .Include(p => p.Attachments)
                         .ThenInclude(p => p.Attachment)
+                    .Where(p => !p.HasDeleted && p.HasAccepted)
                     .AsQueryable();
 
                 int productMax = countfilterProductList(_dbContext.Products, filterProductRequestDTO);
@@ -141,7 +147,7 @@ namespace AdsMarketSharing.Controllers
                     .ThenInclude(pc => pc.ProductClassifyTypes)
                 .Include(p => p.Attachments)
                     .ThenInclude(p => p.Attachment)
-                .Where(p => p.UserPageId == userPage.Id)
+                .Where(p => p.UserPageId == userPage.Id  && !p.HasDeleted && p.HasAccepted)
                 .AsQueryable();
 
             // 3. Filter product list{
@@ -252,7 +258,7 @@ namespace AdsMarketSharing.Controllers
                             Inventory = pd.Inventory,
                             PresentImage = _mapper.Map<Attachment>(pd.PresentImage),
                             ClassifyTypeKey = classifyTypes.ElementAtOrDefault(0).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(0)),
-                            ClassifyTypeValue = classifyTypes.ElementAtOrDefault(1) != null ? classifyTypes.ElementAtOrDefault(1).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(1)): null,
+                            ClassifyTypeValue = classifyTypes.ElementAtOrDefault(1) != null ? classifyTypes.ElementAtOrDefault(1).ElementAtOrDefault(pd.ClassifyIndexes.ElementAt(1)) : null,
                         })
                         .ToList();
                 }
@@ -265,7 +271,7 @@ namespace AdsMarketSharing.Controllers
 
                 // 2.   Execute the list of long-running tasks
                 var tasks = new List<Task<List<AttachmentResponseDTO>>>();
-               
+
                 // 2.1. Add task of images
                 if (request.Files != null)
                 {
@@ -302,14 +308,14 @@ namespace AdsMarketSharing.Controllers
                     }));
                 }
                 // 3.2.Handle the product classify detail image
-                if(classifyDetails != null && responses.ElementAt(1) != null && responses.ElementAt(1).Count > 0)
+                if (classifyDetails != null && responses.ElementAt(1) != null && responses.ElementAt(1).Count > 0)
                 {
                     var attachments = responses.ElementAtOrDefault(1)
                                         .AsQueryable()
                                         .ProjectTo<Attachment>(_mapper.ConfigurationProvider)
                                         .ToList();
 
-                    classifyDetails = classifyDetails.Select((p,index) =>
+                    classifyDetails = classifyDetails.Select((p, index) =>
                     {
                         int position = request.ProductDetails.ElementAt(index).ClassifyIndexes[0];
                         var _presentImage = attachments.ElementAtOrDefault(position);
@@ -319,7 +325,7 @@ namespace AdsMarketSharing.Controllers
                 }
 
                 _dbContext.ProductClassfiyDetails.AddRange(classifyDetails);
-                _dbContext.SaveChanges();   
+                _dbContext.SaveChanges();
 
                 return StatusCode(200, new
                 {
@@ -329,7 +335,7 @@ namespace AdsMarketSharing.Controllers
             }
             catch (System.Exception e)
             {
-                return StatusCode(500,e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -465,8 +471,9 @@ namespace AdsMarketSharing.Controllers
 
             if (product is null) return NotFound("Cannot found your product");
 
-            _dbContext.Products.Remove(product);
-            await _dbContext.SaveChangesAsync();
+            product.HasDeleted = true;
+            _dbContext.Products.Update(product);
+            _dbContext.SaveChanges();
             return Ok("Deleted");
         }
 

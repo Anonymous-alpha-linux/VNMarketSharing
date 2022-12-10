@@ -21,12 +21,10 @@ using Swashbuckle.AspNetCore.Filters;
 using AdsMarketSharing.Hubs;
 using AdsMarketSharing.Models.Payment;
 using AdsMarketSharing.Services.Payment;
-using AdsMarketSharing.Entities;
 
-using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using AdsMarketSharing.Services.Notification;
 
 namespace AdsMarketSharing
 {
@@ -140,21 +138,34 @@ namespace AdsMarketSharing
                 options.AddPolicy("AdminOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "Administrator"));
                 
                 options.AddPolicy("SellerOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "Merchant", "Administrator"));
+
+                options.AddPolicy("BuyerOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "Merchant", "Administrator"))
             });
     
             services.AddHttpContextAccessor();
+            
             // Singleton Service
+            
+
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
             services.AddSingleton<IFileStorageService, CloudinaryStorageService>();
             // My services
             //services.AddScoped<ICollaborator, Collaborator>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
             services.AddScoped<IAuthRepository, AuthRepository>();
+
             services.AddScoped<IToken, TokenRepository>();                
+
             services.AddScoped<IMailService, MailService>()
                 .Configure<EmailConfiguration>(Configuration.GetSection("AppSettings:EmailSettings"));
+
             services.AddScoped<IPaymentService, VNPayPaymentService>()
                 .Configure<VNPayPaymentConfiguration>(Configuration.GetSection("AppSettings:VNPay"));
+
+            //services.AddSingleton<INotificationService, NotificationService>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -165,7 +176,9 @@ namespace AdsMarketSharing
                 app.UseDeveloperExceptionPage();
                 app.UseForwardedHeaders(new ForwardedHeadersOptions() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All });
             }
+           
             app.UseSwagger();
+            
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "AdsMarketSharing API");
@@ -173,12 +186,16 @@ namespace AdsMarketSharing
             });
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All });
+            
             app.UseHttpsRedirection();
-            app.UseRouting();
-            app.UseCookiePolicy();
-            app.UseCors("AllowAPIRequestIO");
-            app.UseAuthentication();
 
+            app.UseRouting();
+
+            app.UseCookiePolicy();
+
+            app.UseCors("AllowAPIRequestIO");
+
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

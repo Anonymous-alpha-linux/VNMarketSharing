@@ -6,9 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DTOs\Ads\**" />
     <Compile Remove="Models\Auth\**" />
+    <Content Remove="DTOs\Ads\**" />
     <Content Remove="Models\Auth\**" />
+    <EmbeddedResource Remove="DTOs\Ads\**" />
     <EmbeddedResource Remove="Models\Auth\**" />
+    <None Remove="DTOs\Ads\**" />
     <None Remove="Models\Auth\**" />
   </ItemGroup>
 
@@ -121,6 +125,8 @@
     <Compile Remove="Migrations\20221124173749_update product category model.Designer.cs" />
     <Compile Remove="Migrations\20221124174536_update product category model.cs" />
     <Compile Remove="Migrations\20221124174536_update product category model.Designer.cs" />
+    <Compile Remove="Migrations\20221205165414_update notifytracker.cs" />
+    <Compile Remove="Migrations\20221205165414_update notifytracker.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -151,10 +157,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\Ads\" />
-    <Folder Include="DTOs\Collaborator\" />
     <Folder Include="Services\Ads\" />
-    <Folder Include="Services\Notification\" />
   </ItemGroup>
 
 

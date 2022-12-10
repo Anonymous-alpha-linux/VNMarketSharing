@@ -14,6 +14,8 @@ using AdsMarketSharing.DTOs.User;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper.QueryableExtensions;
 using System.IdentityModel.Tokens.Jwt;
+using AdsMarketSharing.DTOs.Notification;
+using AdsMarketSharing.DTOs.Product;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -36,7 +38,7 @@ namespace AdsMarketSharing.Controllers
             _mapper = mapper;
             _unitOfWork = unitOfWork;
         }
-        [Authorize]
+       
         [HttpGet]
         public async Task<IActionResult> GetInfo()
         {
@@ -61,7 +63,7 @@ namespace AdsMarketSharing.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [Authorize]
+
         [HttpPost("avatar")]
         public async Task<IActionResult> ChangeAvatar([FromForm] UploadFileDTO request)
         {
@@ -102,6 +104,7 @@ namespace AdsMarketSharing.Controllers
                 NewAvatar = serviceResponseHadAvatar.Data.PublicPath 
             });
         }
+
         [HttpGet("info")]
         public async Task<IActionResult> GetUserInfo([FromQuery]int userId)
         {
@@ -115,7 +118,7 @@ namespace AdsMarketSharing.Controllers
                 return BadRequest("Cannot find your user information. Please specific it");
             }   
         }
-        [Authorize]
+
         [HttpPut("updateInfo")]
         public async Task<IActionResult> UpdateInfo(GenerateUserRequestDTO request)
         {
@@ -140,7 +143,7 @@ namespace AdsMarketSharing.Controllers
                 Message = "Updated successfully"
             });
         }
-        [Authorize]
+
         [HttpPost("upload/banner")]
         public async Task<IActionResult> UploadAds()
         {
@@ -188,7 +191,6 @@ namespace AdsMarketSharing.Controllers
         }
 
         // 2. Address Visitor 
-        [Authorize]
         [HttpGet("addresses")]
         public async Task<IActionResult> GetAddresses([FromQuery] int userId, int addressType) {
             if(userId == null)
@@ -198,7 +200,7 @@ namespace AdsMarketSharing.Controllers
             var addressLst = await _unitOfWork.ReceiverAddressRepository.Find(address => address.UserId == userId && address.AddressType == addressType);
             return Ok(addressLst);
         }
-        [Authorize]
+
         [HttpGet("address/{addressId}")]
         public async Task<IActionResult> GetSingleAddress([FromRoute]int addressId)
         {
@@ -213,7 +215,7 @@ namespace AdsMarketSharing.Controllers
             }
             return Ok(address);
         }
-        [Authorize]
+
         [HttpPost("createAddress")]
         public async Task<IActionResult> AddAddress([FromBody] AddAddressRequestDTO request) {
             try
@@ -227,7 +229,7 @@ namespace AdsMarketSharing.Controllers
                 return StatusCode(400, e.Message);
             }
         }
-        [Authorize]
+
         [HttpPut("updateAddress")]
         public async Task<IActionResult> UpdateAddress(UpdateAddressRequestDTO request,int addressId) {
             try
@@ -250,7 +252,7 @@ namespace AdsMarketSharing.Controllers
                 return StatusCode(500, e.Message);
             }
         }
-        [Authorize]
+
         [HttpPut("setdefault")]
         public async Task<IActionResult> UpdateAddressDefault(int addressId, int userId, int type)
         {
@@ -284,7 +286,7 @@ namespace AdsMarketSharing.Controllers
                 return StatusCode(500, e.Message);
             }
         }
-        [Authorize]
+
         [HttpDelete("removeAddress")]
         public async Task<IActionResult> RemoveAddress(int addressId)
         {
@@ -313,6 +315,33 @@ namespace AdsMarketSharing.Controllers
             }
         }
 
+        [HttpGet("notifies")]
+        public async Task<IActionResult> GetNotifications([FromQuery] FilterNotificationRequestDTO filter)
+        {
+            var notificationList = _context.Notifytrackers
+                .OrderByDescending(p => p.Notification.CreatedAt)
+                .Include(p => p.Notification)
+                .Include(p => p.ToUser)
+                .Where(p => p.UserId == filter.UserId);
+
+            int max = notificationList.Count();
+
+            if(filter.Page > 0 && filter.Take > 0)
+            {
+                notificationList = notificationList.Skip((filter.Page - 1) * filter.Take).Take(filter.Take);
+            }
+
+            var result = notificationList
+                    .ProjectTo<NotificationTrackerResponseDTO>(_mapper.ConfigurationProvider)
+                    .ToList();
+
+            return Ok(new
+            {
+                Result = result,
+                Amount = result.Count,
+                Max = max
+            });
+        }
 
     }
 }
