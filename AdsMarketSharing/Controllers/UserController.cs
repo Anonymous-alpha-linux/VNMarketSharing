@@ -342,6 +342,5 @@ namespace AdsMarketSharing.Controllers
                 Max = max
             });
         }
-
     }
 }

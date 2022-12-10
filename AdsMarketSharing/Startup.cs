@@ -139,7 +139,7 @@ namespace AdsMarketSharing
                 
                 options.AddPolicy("SellerOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "Merchant", "Administrator"));
 
-                options.AddPolicy("BuyerOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "Merchant", "Administrator"))
+                options.AddPolicy("BuyerOnly", policy => policy.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "User"));
             });
     
             services.AddHttpContextAccessor();

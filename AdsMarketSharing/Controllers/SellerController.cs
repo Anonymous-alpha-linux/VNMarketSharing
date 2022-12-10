@@ -157,5 +157,19 @@ namespace AdsMarketSharing.Controllers
             var result = orderList.ProjectTo<OrderResponseDTO>(_mapper.ConfigurationProvider).ToList();
             return Ok(result);
         }
+        [HttpGet("order/traverse")]
+        public async Task<IActionResult> AcceptOrder([FromQuery]OrderRequestDTO request)
+        {
+            var order = _context.Orders.FirstOrDefault(p => p.Id == request.OrderId);
+            if(order == null)
+            {
+                return BadRequest("Cannot find your order");
+            }
+            
+            order.OrderStatus = request.Status;
+            _context.Orders.Update(order);
+            _context.SaveChanges();
+            return Ok("Updated order");
+        }
     }
 }

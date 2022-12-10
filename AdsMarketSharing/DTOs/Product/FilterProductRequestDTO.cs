@@ -12,6 +12,7 @@ namespace AdsMarketSharing.DTOs.Product
         public bool? FollowPrice { get; set; }
         public int? MinPrice { get; set; }
         public int? MaxPrice { get; set; }
+        public int? Star { get; set; }
         public bool? FollowRating { get; set; }
         public int? CategoryId { get; set; }
     }
